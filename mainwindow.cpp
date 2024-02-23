@@ -27,6 +27,25 @@ MainWindow::MainWindow(QWidget *parent)
     connect(MPlayer,&QMediaPlayer::positionChanged,this, &MainWindow::positionChanged);
 
     ui->horizontalSlider_Audio_File_Duration->setRange(0,MPlayer->duration()/1000);
+
+    ui->tableWidget->setRowCount(10);
+    for (int i = 0 ; i < 10; i++)
+    {
+        ui->tableWidget->setItem(i, 0, new QTableWidgetItem(QString("Song")));
+        ui->tableWidget->setItem(i, 1, new QTableWidgetItem(QString("Artist")));
+        ui->tableWidget->setItem(i, 2, new QTableWidgetItem(QString("Album")));
+        ui->tableWidget->setItem(i, 3, new QTableWidgetItem(QString("Gen")));
+        ui->tableWidget->setItem(i, 4, new QTableWidgetItem(QString("0")));
+        ui->tableWidget->setItem(i, 5, new QTableWidgetItem(QString("0")));
+    }
+
+    ui->tableWidget->setColumnWidth(0, 322);
+    ui->tableWidget->setColumnWidth(1, 322);
+    ui->tableWidget->setColumnWidth(2, 322);
+    ui->tableWidget->setColumnWidth(3, 200);
+    ui->tableWidget->setColumnWidth(4, 25);
+    ui->tableWidget->setColumnWidth(5, 25);
+
 }
 
 MainWindow::~MainWindow()

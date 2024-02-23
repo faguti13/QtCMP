@@ -41,7 +41,7 @@
      <number>2</number>
     </property>
     <property name="text">
-     <string/>
+     <string>FILE_NAME</string>
     </property>
    </widget>
    <widget class="QSlider" name="horizontalSlider_Audio_File_Duration">
@@ -183,41 +183,7 @@ QSlider::handle:horizontal
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QListView" name="listView">
-    <property name="geometry">
-     <rect>
-      <x>430</x>
-      <y>50</y>
-      <width>1290</width>
-      <height>561</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QlistView
-{
-	color:rgb(150,150,150);
-	border:2px solid rgb(55,55,55);	
-}</string>
-    </property>
-   </widget>
-   <widget class="QListView" name="listView_2">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>430</width>
-      <height>860</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QlistView
-{
-	color:rgb(150,150,150);
-	border:2px solid rgb(55,55,55);	
-}</string>
-    </property>
-   </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>440</x>
@@ -358,6 +324,104 @@ QPushButton:Hover
       </widget>
      </item>
     </layout>
+   </widget>
+   <widget class="QTableWidget" name="tableWidget">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>50</y>
+      <width>1290</width>
+      <height>561</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>13</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QTableWidget {
+    color: rgb(150, 150, 150) !important;
+    border: 2px solid rgb(55, 55, 55);
+}
+
+QTableWidget::item {
+    border-bottom: 1px solid rgb(55, 55, 55);
+    padding: 5px; /* Ajusta el valor de padding según tus necesidades */
+}
+
+QTableWidget::item:selected {
+    background-color: rgb(100, 100, 100);
+}
+
+QTableWidget QTableCornerButton::section {
+    background-color: rgb(55, 55, 55);
+    color: rgb(150, 150, 150) !important;
+    border: 1px solid rgb(40, 40, 40);
+    padding: 5px; /* Ajusta el valor de padding según tus necesidades */
+}
+
+QHeaderView::section {
+    background-color: rgb(55, 55, 55);
+    color: rgb(150, 150, 150) !important;
+    border: 1px solid rgb(40, 40, 40);
+    padding: 5px; /* Ajusta el valor de padding según tus necesidades */
+}
+
+QTableWidget::item:first {
+    background-color: rgb(155, 155, 155);
+}
+</string>
+    </property>
+    <property name="selectionMode">
+     <enum>QAbstractItemView::SingleSelection</enum>
+    </property>
+    <attribute name="horizontalHeaderVisible">
+     <bool>false</bool>
+    </attribute>
+    <attribute name="verticalHeaderVisible">
+     <bool>false</bool>
+    </attribute>
+    <column>
+     <property name="text">
+      <string>Canción</string>
+     </property>
+     <property name="foreground">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Artista</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Álbum</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Género</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Up-votes</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Down-votes</string>
+     </property>
+    </column>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
