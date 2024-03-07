@@ -10,10 +10,12 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    principallist.cpp
 
 HEADERS += \
-    mainwindow.h
+    mainwindow.h \
+    principallist.h
 
 FORMS += \
     mainwindow.ui
@@ -22,3 +24,8 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+# Configuración de inclusión y enlace de TagLib
+INCLUDEPATH += /usr/include/taglib
+LIBS += /usr/lib/x86_64-linux-gnu/libtag.so
+
