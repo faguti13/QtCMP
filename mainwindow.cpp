@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(MPlayer,&QMediaPlayer::durationChanged,this, &MainWindow::durationChanged);
     connect(MPlayer,&QMediaPlayer::positionChanged,this, &MainWindow::positionChanged);
 
-    connect(ui->tableWidget, SIGNAL(cellClicked(int,int)), this, SLOT(on_tableWidget_cellClicked(int, int)));
+    connect(ui->tableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(on_tableWidget_cellClicked(int, int)));
 
     ui->horizontalSlider_Audio_File_Duration->setRange(0,MPlayer->duration()/1000);
 
@@ -37,18 +37,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     Node** nodeArray = listaPrincipal.getArrayList();
 
-    // for (int i = 0; nodeArray[i] != nullptr; ++i) {
-    //     std::cout << "Canción: " << nodeArray[i]->title << " , " << nodeArray[i]->artist << std::endl;
-    // }
-
-    // No olvides liberar la memoria cuando ya no la necesites
-    // delete[] nodeArray;
-
     int numNodes = 0;
     while (nodeArray[numNodes] != nullptr) {
         ++numNodes;
     }
 
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableWidget->setRowCount(numNodes);
     for (int i = 0; i < numNodes; ++i) {
         QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->title));
@@ -57,6 +51,10 @@ MainWindow::MainWindow(QWidget *parent)
         QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->genre));
         QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(nodeArray[i]->upVotes));
         QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(nodeArray[i]->downVotes));
+
+        // Almacena la referencia del nodo en la columna 0
+        itemTitle->setData(Qt::UserRole, QVariant::fromValue(nodeArray[i]));
+
 
         ui->tableWidget->setItem(i, 0, itemTitle);
         ui->tableWidget->setItem(i, 1, itemArtist);
@@ -129,20 +127,20 @@ void MainWindow::on_pushButton_Volume_clicked()
 }
 
 
-void MainWindow::on_actionOpen_Audio_File_triggered()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Select Audio File"), "", tr("MP3 Files (*.mp3)"));
+// void MainWindow::on_actionOpen_Audio_File_triggered()
+// {
+//     QString fileName = QFileDialog::getOpenFileName(this, tr("Select Audio File"), "", tr("MP3 Files (*.mp3)"));
 
-    // Convertir la ruta a un formato compatible con URI
-    QUrl fileUrl = QUrl::fromLocalFile(fileName);
+//     // Convertir la ruta a un formato compatible con URI
+//     QUrl fileUrl = QUrl::fromLocalFile(fileName);
 
-    // Establecer la URL en el reproductor multimedia
-    MPlayer->setMedia(fileUrl);
+//     // Establecer la URL en el reproductor multimedia
+//     MPlayer->setMedia(fileUrl);
 
-    // Actualizar la etiqueta con el nombre del archivo
-    QFileInfo fileInfo(fileName);
-    ui->label_File_Name->setText(fileInfo.fileName());
-}
+//     // Actualizar la etiqueta con el nombre del archivo
+//     QFileInfo fileInfo(fileName);
+//     ui->label_File_Name->setText(fileInfo.fileName());
+// }
 
 
 void MainWindow::on_pushButton_Play_clicked()
@@ -188,7 +186,7 @@ void MainWindow::on_horizontalSlider_Audio_File_Duration_valueChanged(int value)
     double position = (static_cast<double>(value) / maxValue) * duration;
 
     // Redondear al entero más cercano
-    qint64 roundedPosition = static_cast<qint64>(position + 0.00005);
+    qint64 roundedPosition = static_cast<qint64>(position + 0.5);
 
     // Establecer la posición de reproducción
     MPlayer->setPosition(roundedPosition);
@@ -201,15 +199,15 @@ void MainWindow::on_horizontalSlider_Audio_Volume_valueChanged(int value)
 
 void MainWindow::on_tableWidget_cellClicked(int row, int column)
 {
-    if (column == 0) {  // Suponiendo que la columna 0 contiene el título de la canción
+    if (column == 0) {
         QTableWidgetItem *item = ui->tableWidget->item(row, column);
 
-        // Verifica si el elemento tiene datos asociados (podrías haber configurado datos personalizados en addItem)
-        if (item->data(Qt::UserRole).isValid()) {
-            // Obtén la información de la canción asociada a la fila/columna
+        // Verifica si el elemento tiene datos asociados
+        if (item && item->data(Qt::UserRole).isValid()) {
+            // Obtén el nodo asociado a la celda
             Node* node = qvariant_cast<Node*>(item->data(Qt::UserRole));
 
-            // Obtén la ruta del archivo de la canción
+            // Obtén el path del archivo de la canción
             std::string filePath = node->reference;
 
             // Convierte la ruta a un formato compatible con URI
@@ -226,6 +224,4 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
             MPlayer->play();
         }
     }
-
 }
-

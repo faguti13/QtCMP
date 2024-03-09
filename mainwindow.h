@@ -27,7 +27,7 @@ private slots:
 
     void on_pushButton_Volume_clicked();
 
-    void on_actionOpen_Audio_File_triggered();
+    //void on_actionOpen_Audio_File_triggered();
 
     void on_pushButton_Play_clicked();
 
@@ -43,7 +43,6 @@ private slots:
 
     void on_horizontalSlider_Audio_Volume_valueChanged(int value);
 
-public slots:
     void on_tableWidget_cellClicked(int row, int column);
 
 private:
