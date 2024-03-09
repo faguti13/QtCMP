@@ -1,11 +1,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "principallist.h"
+#include "Node.h"
+#include <iostream>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    setFixedSize(1720,880);
+    setFixedSize(1250,640);
     ui->setupUi(this);
 
     MPlayer = new QMediaPlayer();
@@ -26,23 +29,47 @@ MainWindow::MainWindow(QWidget *parent)
     connect(MPlayer,&QMediaPlayer::durationChanged,this, &MainWindow::durationChanged);
     connect(MPlayer,&QMediaPlayer::positionChanged,this, &MainWindow::positionChanged);
 
+    connect(ui->tableWidget, SIGNAL(cellClicked(int,int)), this, SLOT(on_tableWidget_cellClicked(int, int)));
+
     ui->horizontalSlider_Audio_File_Duration->setRange(0,MPlayer->duration()/1000);
 
-    ui->tableWidget->setRowCount(10);
-    for (int i = 0 ; i < 10; i++)
-    {
-        ui->tableWidget->setItem(i, 0, new QTableWidgetItem(QString("Song")));
-        ui->tableWidget->setItem(i, 1, new QTableWidgetItem(QString("Artist")));
-        ui->tableWidget->setItem(i, 2, new QTableWidgetItem(QString("Album")));
-        ui->tableWidget->setItem(i, 3, new QTableWidgetItem(QString("Gen")));
-        ui->tableWidget->setItem(i, 4, new QTableWidgetItem(QString("0")));
-        ui->tableWidget->setItem(i, 5, new QTableWidgetItem(QString("0")));
+    principalLIst listaPrincipal; // llama al constructor principalLIst
+
+    Node** nodeArray = listaPrincipal.getArrayList();
+
+    // for (int i = 0; nodeArray[i] != nullptr; ++i) {
+    //     std::cout << "Canción: " << nodeArray[i]->title << " , " << nodeArray[i]->artist << std::endl;
+    // }
+
+    // No olvides liberar la memoria cuando ya no la necesites
+    // delete[] nodeArray;
+
+    int numNodes = 0;
+    while (nodeArray[numNodes] != nullptr) {
+        ++numNodes;
     }
 
-    ui->tableWidget->setColumnWidth(0, 322);
-    ui->tableWidget->setColumnWidth(1, 322);
-    ui->tableWidget->setColumnWidth(2, 322);
-    ui->tableWidget->setColumnWidth(3, 200);
+    ui->tableWidget->setRowCount(numNodes);
+    for (int i = 0; i < numNodes; ++i) {
+        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->title));
+        QTableWidgetItem *itemArtist = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->artist));
+        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->album));
+        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->genre));
+        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(nodeArray[i]->upVotes));
+        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(nodeArray[i]->downVotes));
+
+        ui->tableWidget->setItem(i, 0, itemTitle);
+        ui->tableWidget->setItem(i, 1, itemArtist);
+        ui->tableWidget->setItem(i, 2, itemAlbum);
+        ui->tableWidget->setItem(i, 3, itemGenre);
+        ui->tableWidget->setItem(i, 4, itemUpVotes);
+        ui->tableWidget->setItem(i, 5, itemDownVotes);
+    }
+
+    ui->tableWidget->setColumnWidth(0, 290);
+    ui->tableWidget->setColumnWidth(1, 150);
+    ui->tableWidget->setColumnWidth(2, 290);
+    ui->tableWidget->setColumnWidth(3, 120);
     ui->tableWidget->setColumnWidth(4, 25);
     ui->tableWidget->setColumnWidth(5, 25);
 
@@ -171,3 +198,34 @@ void MainWindow::on_horizontalSlider_Audio_Volume_valueChanged(int value)
 {
     MPlayer->setVolume(value);
 }
+
+void MainWindow::on_tableWidget_cellClicked(int row, int column)
+{
+    if (column == 0) {  // Suponiendo que la columna 0 contiene el título de la canción
+        QTableWidgetItem *item = ui->tableWidget->item(row, column);
+
+        // Verifica si el elemento tiene datos asociados (podrías haber configurado datos personalizados en addItem)
+        if (item->data(Qt::UserRole).isValid()) {
+            // Obtén la información de la canción asociada a la fila/columna
+            Node* node = qvariant_cast<Node*>(item->data(Qt::UserRole));
+
+            // Obtén la ruta del archivo de la canción
+            std::string filePath = node->reference;
+
+            // Convierte la ruta a un formato compatible con URI
+            QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+
+            // Establece la URL en el reproductor multimedia
+            MPlayer->setMedia(fileUrl);
+
+            // Actualiza la etiqueta con el nombre del archivo
+            QFileInfo fileInfo(QString::fromStdString(filePath));
+            ui->label_File_Name->setText(fileInfo.fileName());
+
+            // Inicia la reproducción
+            MPlayer->play();
+        }
+    }
+
+}
+

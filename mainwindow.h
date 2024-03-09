@@ -43,6 +43,9 @@ private slots:
 
     void on_horizontalSlider_Audio_Volume_valueChanged(int value);
 
+public slots:
+    void on_tableWidget_cellClicked(int row, int column);
+
 private:
     void updateduration(qint64 duration);
     Ui::MainWindow *ui;

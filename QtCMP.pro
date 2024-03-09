@@ -14,6 +14,7 @@ SOURCES += \
     principallist.cpp
 
 HEADERS += \
+    Node.h \
     mainwindow.h \
     principallist.h
 

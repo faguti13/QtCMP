@@ -1,4 +1,5 @@
 #include "principallist.h"
+#include "Node.h"
 
 #include <iostream>
 #include <taglib/taglib.h> //Para los metadatos
@@ -18,21 +19,6 @@ using namespace TagLib;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct Node { //Estructura del nodo (def el contenido de cada uno)
-    std::string title;
-    std::string artist;
-    std::string album;
-    std::string genre;
-    std::string reference;
-    int upVotes;
-    int downVotes;
-
-    Node* prev;
-    Node* next;
-
-    Node(const std::string& t, const std::string& a, const std::string& al, const std::string& g,const std::string& r, int uV, int dV)
-        : title(t), artist(a), album(al), genre(g), reference(r), upVotes(uV), downVotes(dV), prev(nullptr), next(nullptr) {}
-};
 
 // Clase lista doblemente enlazada
 class DoublyLinkedList {
@@ -67,41 +53,76 @@ public:
             current = current->next;
         }
     }
+
+    Node* getHead() const {
+        return head;
+    }
+
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////
+
+DoublyLinkedList principalLinkedList;
 
 // Clase para la lista principal (inicio)
 class principalList {
 public:
     principalList(); // Declaración del constructor
+
+        //void getArrayList(){}
 };
 
 principalLIst::principalLIst() { // Constructor de principalLIst
     //Abre el .ini para obtener la ruta de la carpeta
     try {
         pt::ptree tree;
-        pt::ini_parser::read_ini("/home/asly/Downloads/QtCMP/config.ini", tree); // CAMBIAR POR RUTA RELATIVA
+        pt::ini_parser::read_ini("/home/fabiangj/QtCMP/config.ini", tree); // CAMBIAR POR RUTA RELATIVA
 
         // Accede al path establecido en el archivo .ini
         std::string folderPath = tree.get<std::string>("music.musicFolderPath");
-        std::cout << "Dirección folder de música: " << folderPath << std::endl;
+        //std::cout << "Dirección folder de música: " << folderPath << std::endl;
 
         // Llama al método que detecta la cantidad de archivos en la carpeta
         listFilesInFolder(folderPath);
+        //principalLinkedList.printForward();
 
     } catch(const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
 }
 
-DoublyLinkedList principalLinkedList;
+Node** principalLIst::getArrayList() {
+    const int maxSongs = 50;
+    Node** nodeArray = new Node*[maxSongs]; // Utiliza new para asignar memoria dinámica
 
-void listFilesInFolder(const std::string& folderPath) { // Método para saber el path de cada .mp3
+    // Inicializar el array a nullptr para asegurarse de que los elementos no inicializados sean seguros de usar
+    std::fill_n(nodeArray, maxSongs, nullptr);
+
+    // Recorre la lista enlazada y agrega los nodos al array
+    Node* current = principalLinkedList.getHead(); // Suponiendo que tienes un método getHead() en DoublyLinkedList
+    int index = 0;
+    while (current != nullptr && index < maxSongs) {
+        nodeArray[index++] = current;
+        current = current->next;
+    }
+
+    // Ahora nodeArray contiene los nodos de principalLinkedList hasta el máximo de 50 canciones
+    // Puedes acceder a los elementos del array para obtener la información que necesitas
+
+    // Devuelve el array
+    return nodeArray;
+}
+
+
+void listFilesInFolder(const std::string& folderPath) {
     for (const auto& entry : fs::directory_iterator(folderPath)) {
-        //std::cout << entry.path() << std::endl; //Comprobar que pase bien el path
         std::string filePathArchive = entry.path();
-        loadAndPrintMetadata(filePathArchive); // Llama al método que carga y muestra los metadatos
+
+        // Verificar que el archivo tenga la extensión ".mp3" antes de procesarlo
+        if (fs::is_regular_file(entry) && filePathArchive.substr(filePathArchive.find_last_of(".") + 1) == "mp3") {
+            loadAndPrintMetadata(filePathArchive);
+        }
     }
 }
 
@@ -115,19 +136,18 @@ void loadAndPrintMetadata(const std::string& filePath) { // Método para cargar 
 
     // Acceder a los tags
     if (tag) {
-        //cout << "Título: " << tag->title().toCString(true) << endl; // Prubas para verificar que obtenga los metadatos bien
-        //cout << "Artista: " << tag->artist().toCString(true) << endl;
-        //cout << "Álbum: " << tag->album().toCString(true) << endl;
-        //cout << "Género: " << tag->genre().toCString(true) << endl;
-        //cout << "Referencia: " << filePath << endl;
+        // cout << "Título: " << tag->title().toCString(true) << endl; // Prubas para verificar que obtenga los metadatos bien
+        // cout << "Artista: " << tag->artist().toCString(true) << endl;
+        // cout << "Álbum: " << tag->album().toCString(true) << endl;
+        // cout << "Género: " << tag->genre().toCString(true) << endl;
+        // cout << "Referencia: " << filePath << endl;
 
         // Inserta los metadatos en un nodo de la lista
         principalLinkedList.insertEnd(tag->title().toCString(true), tag->artist().toCString(true), tag->album().toCString(true),
                                       tag->genre().toCString(true), filePath, 0, 0);
 
-        std::cout << "Nodos actuales en la lista:" << std::endl;
-        principalLinkedList.printForward();
-
+        //std::cout << "Nodos actuales en la lista:" << std::endl;
+        //principalLinkedList.printForward();
     } else {
         cout << "No se encontraron metadatos en el archivo." << endl;
     }}
