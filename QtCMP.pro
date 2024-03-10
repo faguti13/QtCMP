@@ -11,11 +11,13 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    pagedarray.cpp \
     principallist.cpp
 
 HEADERS += \
     Node.h \
     mainwindow.h \
+    pagedarray.h \
     principallist.h
 
 FORMS += \

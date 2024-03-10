@@ -5,6 +5,8 @@
 #include <QtMultimedia>
 #include <QtCore>
 #include <QtWidgets>
+#include <QTimer>
+#include <QProcess>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -45,11 +47,15 @@ private slots:
 
     void on_tableWidget_cellClicked(int row, int column);
 
+    void updateMemoryUsage();
+
 private:
     void updateduration(qint64 duration);
     Ui::MainWindow *ui;
     bool IS_Muted = false;
     QMediaPlayer *MPlayer;
     qint64 Mduration;
+    QTimer *memoryUpdateTimer;
+
 };
 #endif // MAINWINDOW_H

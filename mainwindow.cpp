@@ -3,13 +3,24 @@
 #include "principallist.h"
 #include "Node.h"
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <unistd.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    setFixedSize(1250,640);
+    setFixedSize(1250,660);
     ui->setupUi(this);
+
+    // Configurar el temporizador para actualizar la memoria cada segundo
+    memoryUpdateTimer = new QTimer(this);
+    connect(memoryUpdateTimer, SIGNAL(timeout()), this, SLOT(updateMemoryUsage()));
+    memoryUpdateTimer->start(1000); // Actualizar cada segundo
+
+    // Inicializar la información de memoria
+    updateMemoryUsage();
 
     MPlayer = new QMediaPlayer();
 
@@ -222,6 +233,26 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
 
             // Inicia la reproducción
             MPlayer->play();
+        }
+    }
+}
+
+void MainWindow::updateMemoryUsage()
+{
+    QFile file("/proc/self/statm");
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        QString result = in.readLine();
+        file.close();
+
+        QStringList tokens = result.split(" ", QString::SkipEmptyParts);
+        if (tokens.size() >= 1) {
+            qint64 pages = tokens.at(0).toLongLong();
+            qint64 pageSize = 4; // Tamaño de página típico en Linux (en kilobytes)
+            qint64 memoryInKB = pages * pageSize;
+            double memoryInMB = static_cast<double>(memoryInKB) / 1024;
+
+            ui->memorylabel->setText(QString("Memoria en uso: %1 MB").arg(memoryInMB, 0, 'f', 2));
         }
     }
 }
