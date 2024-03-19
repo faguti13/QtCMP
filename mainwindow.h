@@ -49,6 +49,10 @@ private slots:
 
     void updateMemoryUsage();
 
+    void on_checkBox_CommunityPlaylist_toggled(bool checked);
+
+    void on_checkBox_Pagination_toggled(bool checked);
+
 private:
     void updateduration(qint64 duration);
     Ui::MainWindow *ui;

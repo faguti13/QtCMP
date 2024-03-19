@@ -256,3 +256,26 @@ void MainWindow::updateMemoryUsage()
         }
     }
 }
+
+void MainWindow::on_checkBox_CommunityPlaylist_toggled(bool checked)
+{
+    if(checked == true){
+        std::cout<<"Community playlist on"<<std::endl;
+    }
+    else
+    {
+        std::cout<<"Community playlist off"<<std::endl;
+    }
+}
+
+
+void MainWindow::on_checkBox_Pagination_toggled(bool checked)
+{
+    if(checked == true){
+        std::cout<<"Pagination on"<<std::endl;
+    }
+    else
+    {
+        std::cout<<"Pagination off"<<std::endl;
+    }
+}

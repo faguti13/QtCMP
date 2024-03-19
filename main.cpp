@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;   
     w.show();
+/*
 
     principalLIst listaPrincipal; // llama al constructor principalLIst
 
@@ -38,7 +39,7 @@ int main(int argc, char *argv[])
     // Ahora, el contenido del array se ha paginado al archivo de swap
 
     // Realiza algunas operaciones sobre el PagedArray (agregar, eliminar, acceder, etc.)
-    Node* newNode = new Node(/* ... */);
+    Node* newNode = new Node(/* ... *);
     pagedArray.add(*newNode);  // Desreferenciar el puntero y pasar el objeto Node por referencia constante
 
     // Accede a un nodo específico por índice
@@ -48,7 +49,6 @@ int main(int argc, char *argv[])
     // Elimina un nodo específico por índice
     int indexToRemove = 5;
     pagedArray.remove(indexToRemove);
-
-
+*/
     return a.exec();
 }

@@ -1,0 +1,11 @@
+/home/emmanuel/CLionProjects/Cliente2/target/debug/build/fltk-sys-e393230ba98bded5/build_script_main-e393230ba98bded5: /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/main.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/android.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/bundled.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/link.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/pkg_config.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/source.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/utils.rs
+
+/home/emmanuel/CLionProjects/Cliente2/target/debug/build/fltk-sys-e393230ba98bded5/build_script_main-e393230ba98bded5.d: /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/main.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/android.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/bundled.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/link.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/pkg_config.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/source.rs /home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/utils.rs
+
+/home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/main.rs:
+/home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/android.rs:
+/home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/bundled.rs:
+/home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/link.rs:
+/home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/pkg_config.rs:
+/home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/source.rs:
+/home/emmanuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/fltk-sys-1.4.26/build/utils.rs:
