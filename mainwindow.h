@@ -29,8 +29,6 @@ private slots:
 
     void on_pushButton_Volume_clicked();
 
-    //void on_actionOpen_Audio_File_triggered();
-
     void on_pushButton_Play_clicked();
 
     void on_pushButton_Pause_clicked();
@@ -52,6 +50,12 @@ private slots:
     void on_checkBox_CommunityPlaylist_toggled(bool checked);
 
     void on_checkBox_Pagination_toggled(bool checked);
+
+public slots:
+    void handleMediaStatusChanged(QMediaPlayer::MediaStatus status);
+
+    void playNextSong();
+
 
 private:
     void updateduration(qint64 duration);

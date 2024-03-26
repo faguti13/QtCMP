@@ -6,7 +6,6 @@
 #include <fstream>
 #include <string>
 #include <unistd.h>
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -23,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
     updateMemoryUsage();
 
     MPlayer = new QMediaPlayer();
+
+    // Conectar la señal mediaStatusChanged a handleMediaStatusChanged
+    connect(MPlayer, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::handleMediaStatusChanged);
 
     ui->pushButton_Play->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
     ui->pushButton_Pause->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
@@ -66,7 +68,6 @@ MainWindow::MainWindow(QWidget *parent)
         // Almacena la referencia del nodo en la columna 0
         itemTitle->setData(Qt::UserRole, QVariant::fromValue(nodeArray[i]));
 
-
         ui->tableWidget->setItem(i, 0, itemTitle);
         ui->tableWidget->setItem(i, 1, itemArtist);
         ui->tableWidget->setItem(i, 2, itemAlbum);
@@ -81,8 +82,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->setColumnWidth(3, 120);
     ui->tableWidget->setColumnWidth(4, 25);
     ui->tableWidget->setColumnWidth(5, 25);
-
 }
+
+
 
 MainWindow::~MainWindow()
 {
@@ -137,23 +139,6 @@ void MainWindow::on_pushButton_Volume_clicked()
     }
 }
 
-
-// void MainWindow::on_actionOpen_Audio_File_triggered()
-// {
-//     QString fileName = QFileDialog::getOpenFileName(this, tr("Select Audio File"), "", tr("MP3 Files (*.mp3)"));
-
-//     // Convertir la ruta a un formato compatible con URI
-//     QUrl fileUrl = QUrl::fromLocalFile(fileName);
-
-//     // Establecer la URL en el reproductor multimedia
-//     MPlayer->setMedia(fileUrl);
-
-//     // Actualizar la etiqueta con el nombre del archivo
-//     QFileInfo fileInfo(fileName);
-//     ui->label_File_Name->setText(fileInfo.fileName());
-// }
-
-
 void MainWindow::on_pushButton_Play_clicked()
 {
     MPlayer->play();
@@ -171,19 +156,85 @@ void MainWindow::on_pushButton_Stop_clicked()
     MPlayer->stop();
 }
 
+// Declaración de variables miembro en la clase MainWindow para mantener el índice actual
+int currentSongIndex = -1; // Inicializado en -1 para indicar que no hay canción en reproducción
 
 void MainWindow::on_pushButton_Seek_Forward_clicked()
 {
-    ui->horizontalSlider_Audio_File_Duration->setValue(ui->horizontalSlider_Audio_File_Duration->value()+100);
-    MPlayer->setPosition(ui->horizontalSlider_Audio_File_Duration->value() * 1000);
-}
+    int nextIndex = currentSongIndex + 1;
 
+    if (nextIndex < ui->tableWidget->rowCount()) {
+        currentSongIndex = nextIndex;
+
+        QTableWidgetItem *nextItem = ui->tableWidget->item(nextIndex, 0);
+
+        if (nextItem && nextItem->data(Qt::UserRole).isValid()) {
+            // Obtén el nodo asociado a la celda de la siguiente canción
+            Node* nextNode = qvariant_cast<Node*>(nextItem->data(Qt::UserRole));
+
+            // Obtén la información de la siguiente canción
+            std::string songName = nextItem->text().toStdString();
+            std::string artistName = ui->tableWidget->item(nextIndex, 1)->text().toStdString();
+            std::string albumName = ui->tableWidget->item(nextIndex, 2)->text().toStdString();
+            std::string genre = ui->tableWidget->item(nextIndex, 3)->text().toStdString();
+
+            // Establece la información en el label
+            QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+            ui->label_File_Name->setText(songInfo);
+
+            // Obtén el path del archivo de la siguiente canción
+            std::string filePath = nextNode->reference;
+
+            // Convierte la ruta a un formato compatible con URI
+            QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+
+            // Establece la URL en el reproductor multimedia
+            MPlayer->setMedia(fileUrl);
+
+            // Inicia la reproducción de la siguiente canción
+            MPlayer->play();
+        }
+    }
+}
 
 void MainWindow::on_pushButton_Seek_Back_clicked()
 {
-    ui->horizontalSlider_Audio_File_Duration->setValue(ui->horizontalSlider_Audio_File_Duration->value()-100);
-    MPlayer->setPosition(ui->horizontalSlider_Audio_File_Duration->value() * 1000);
+    int prevIndex = currentSongIndex - 1;
+
+    if (prevIndex >= 0) {
+        currentSongIndex = prevIndex;
+
+        QTableWidgetItem *prevItem = ui->tableWidget->item(prevIndex, 0);
+
+        if (prevItem && prevItem->data(Qt::UserRole).isValid()) {
+            // Obtén el nodo asociado a la celda de la canción anterior
+            Node* prevNode = qvariant_cast<Node*>(prevItem->data(Qt::UserRole));
+
+            // Obtén la información de la canción anterior
+            std::string songName = prevItem->text().toStdString();
+            std::string artistName = ui->tableWidget->item(prevIndex, 1)->text().toStdString();
+            std::string albumName = ui->tableWidget->item(prevIndex, 2)->text().toStdString();
+            std::string genre = ui->tableWidget->item(prevIndex, 3)->text().toStdString();
+
+            // Establece la información en el label
+            QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+            ui->label_File_Name->setText(songInfo);
+
+            // Obtén el path del archivo de la canción anterior
+            std::string filePath = prevNode->reference;
+
+            // Convierte la ruta a un formato compatible con URI
+            QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+
+            // Establece la URL en el reproductor multimedia
+            MPlayer->setMedia(fileUrl);
+
+            // Inicia la reproducción de la canción anterior
+            MPlayer->play();
+        }
+    }
 }
+
 
 void MainWindow::on_horizontalSlider_Audio_File_Duration_valueChanged(int value)
 {
@@ -196,11 +247,8 @@ void MainWindow::on_horizontalSlider_Audio_File_Duration_valueChanged(int value)
     // Calcular la posición basada en la duración total de la canción y el valor del slider
     double position = (static_cast<double>(value) / maxValue) * duration;
 
-    // Redondear al entero más cercano
-    qint64 roundedPosition = static_cast<qint64>(position + 0.5);
-
     // Establecer la posición de reproducción
-    MPlayer->setPosition(roundedPosition);
+    MPlayer->setPosition(position);
 }
 
 void MainWindow::on_horizontalSlider_Audio_Volume_valueChanged(int value)
@@ -218,6 +266,16 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
             // Obtén el nodo asociado a la celda
             Node* node = qvariant_cast<Node*>(item->data(Qt::UserRole));
 
+            // Obtén la información de la canción
+            std::string songName = item->text().toStdString();
+            std::string artistName = ui->tableWidget->item(row, 1)->text().toStdString();
+            std::string albumName = ui->tableWidget->item(row, 2)->text().toStdString();
+            std::string genre = ui->tableWidget->item(row, 3)->text().toStdString();
+
+            // Establece la información en el label
+            QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+            ui->label_File_Name->setText(songInfo);
+
             // Obtén el path del archivo de la canción
             std::string filePath = node->reference;
 
@@ -226,10 +284,6 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
 
             // Establece la URL en el reproductor multimedia
             MPlayer->setMedia(fileUrl);
-
-            // Actualiza la etiqueta con el nombre del archivo
-            QFileInfo fileInfo(QString::fromStdString(filePath));
-            ui->label_File_Name->setText(fileInfo.fileName());
 
             // Inicia la reproducción
             MPlayer->play();
@@ -277,5 +331,40 @@ void MainWindow::on_checkBox_Pagination_toggled(bool checked)
     else
     {
         std::cout<<"Pagination off"<<std::endl;
+    }
+}
+
+void MainWindow::handleMediaStatusChanged(QMediaPlayer::MediaStatus status)
+{
+    if (status == QMediaPlayer::EndOfMedia) {
+        playNextSong();
+    }
+}
+
+void MainWindow::playNextSong()
+{
+    int nextIndex = currentSongIndex + 1;
+
+    if (nextIndex < ui->tableWidget->rowCount()) {
+        currentSongIndex = nextIndex;
+
+        QTableWidgetItem *nextItem = ui->tableWidget->item(nextIndex, 0);
+
+        if (nextItem && nextItem->data(Qt::UserRole).isValid()) {
+            Node* nextNode = qvariant_cast<Node*>(nextItem->data(Qt::UserRole));
+            std::string songName = nextItem->text().toStdString();
+            std::string artistName = ui->tableWidget->item(nextIndex, 1)->text().toStdString();
+            std::string albumName = ui->tableWidget->item(nextIndex, 2)->text().toStdString();
+            std::string genre = ui->tableWidget->item(nextIndex, 3)->text().toStdString();
+
+            QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+            ui->label_File_Name->setText(songInfo);
+
+            std::string filePath = nextNode->reference;
+            QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+
+            MPlayer->setMedia(fileUrl);
+            MPlayer->play();
+        }
     }
 }
