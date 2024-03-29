@@ -20,6 +20,52 @@ using namespace TagLib;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Definición de la clase NodeC
+class NodeC {
+public:
+    int index;
+    NodeC* nextC;
+
+    NodeC(int _index): index(_index), nextC(nullptr) {}
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Clase para la lista circular
+class CircularList {
+public:
+    std::unordered_map<std::string, NodeC*> artistMap; // artistMap se usa como "contenedor" para almacenar las listas circulares de cada artista
+
+    // Método para verificar si un artista ya está en la lista circular
+    bool containsArtist(const std::string& artist) {
+        return artistMap.find(artist) != artistMap.end();
+    }
+
+    // Método para crear una nueva lista circular para un artista
+    void createArtistList(const std::string& artist) {
+        artistMap[artist] = nullptr; // Inicializa la lista circular como vacía
+    }
+
+    // Método para agregar un nombre de nodo a la lista circular de un artista específico
+    void addToArtistList(const std::string& artist, int index) {
+        NodeC* newNode = new NodeC(index); // Crea un nuevo nodo con el nombre del nodo original
+        if (artistMap[artist] == nullptr) {
+            // Si la lista circular para este artista está vacía, establece el nuevo nodo como el primero
+            newNode->nextC = newNode; // El nuevo nodo apunta a sí mismo (circular)
+            artistMap[artist] = newNode;
+        } else {
+            // Si la lista circular ya contiene nodos, insertar el nuevo nodo al final
+            NodeC* lastNode = artistMap[artist];
+            while (lastNode->nextC != artistMap[artist]) {
+                lastNode = lastNode->nextC;
+            }
+            lastNode->nextC = newNode;
+            newNode->nextC = artistMap[artist];
+        }
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Clase lista doblemente enlazada
 class DoublyLinkedList {
@@ -59,32 +105,51 @@ public:
         return head;
     }
 
-
     // Método para recorrer la lista y encontrar los diferentes artistas
-    void printArtists() {
-        std::unordered_set<std::string> uniqueArtists; // Conjunto para almacenar artistas únicos
-
+    void printArtists(CircularList& artistLists) {
+        int index = 1;
         Node* current = head;
         while (current != nullptr) {
+            // Verificar si el artista ya está en la lista circular
+            if (!artistLists.containsArtist(current->artist)) {
+                // Si el artista no está en la lista, crear una nueva lista circular para él
+                artistLists.createArtistList(current->artist);
+            }
+            // Agregar el nombre del nodo original a la lista circular correspondiente
+            artistLists.addToArtistList(current->artist,index);
 
-            // Inserta el artista en el conjunto si no está repetido
-            uniqueArtists.insert(current->artist); // 'std::unordered_set' garantiza que no se agreguen elementos duplicados
             current = current->next;
-        }
-
-        // Imprime los artistas almacenados en el conjunto
-        std::cout << "Diferentes artistas en la lista:" << std::endl;
-        for (const auto& artist : uniqueArtists) {
-            std::cout << artist << std::endl;
+            index ++;
         }
     }
 
+    // Método para imprimir el contenido de todas las listas circulares (para verificar)
+    void printCircularLists(const CircularList& artistLists) {
+        for (const auto& pair : artistLists.artistMap) {
+            std::cout << "Artista: " << pair.first << std::endl;
+            std::cout << "Posiciones de Canciones:" << std::endl;
+
+            NodeC* current = pair.second;
+            if (current) {
+                do {
+                    std::cout << "\t" << " (" << current->index << ") " << std::endl;
+                    current = current->nextC;
+
+                } while (current != pair.second);
+            } else {
+                std::cout << "\tNo hay canciones para este artista." << std::endl;
+            }
+
+            std::cout << std::endl;
+        }
+    }
 
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 DoublyLinkedList principalLinkedList;
+CircularList artistLists;
 
 // Clase para la lista principal (inicio)
 class principalList {
@@ -108,11 +173,13 @@ principalLIst::principalLIst() { // Constructor de principalLIst
         listFilesInFolder(folderPath);
 
         //principalLinkedList.printForward();
-        principalLinkedList.printArtists();
 
     } catch(const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
+    //principalLinkedList.printArtists();
+    principalLinkedList.printArtists(artistLists);
+    principalLinkedList.printCircularLists(artistLists);
 }
 
 Node** principalLIst::getArrayList() {
@@ -123,15 +190,12 @@ Node** principalLIst::getArrayList() {
     std::fill_n(nodeArray, maxSongs, nullptr);
 
     // Recorre la lista enlazada y agrega los nodos al array
-    Node* current = principalLinkedList.getHead(); // Suponiendo que tienes un método getHead() en DoublyLinkedList
+    Node* current = principalLinkedList.getHead();
     int index = 0;
     while (current != nullptr && index < maxSongs) {
         nodeArray[index++] = current;
         current = current->next;
     }
-
-    // Ahora nodeArray contiene los nodos de principalLinkedList hasta el máximo de 50 canciones
-    // Puedes acceder a los elementos del array para obtener la información que necesitas
 
     // Devuelve el array
     return nodeArray;
@@ -159,11 +223,6 @@ void loadAndPrintMetadata(const std::string& filePath) { // Método para cargar 
 
     // Acceder a los tags
     if (tag) {
-        // cout << "Título: " << tag->title().toCString(true) << endl; // Prubas para verificar que obtenga los metadatos bien
-        // cout << "Artista: " << tag->artist().toCString(true) << endl;
-        // cout << "Álbum: " << tag->album().toCString(true) << endl;
-        // cout << "Género: " << tag->genre().toCString(true) << endl;
-        // cout << "Referencia: " << filePath << endl;
 
         // Inserta los metadatos en un nodo de la lista
         principalLinkedList.insertEnd(tag->title().toCString(true), tag->artist().toCString(true), tag->album().toCString(true),
@@ -171,6 +230,7 @@ void loadAndPrintMetadata(const std::string& filePath) { // Método para cargar 
 
         //std::cout << "Nodos actuales en la lista:" << std::endl;
         //principalLinkedList.printForward();
+
     } else {
         cout << "No se encontraron metadatos en el archivo." << endl;
     }}
