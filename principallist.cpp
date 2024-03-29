@@ -11,6 +11,7 @@
 #include <boost/property_tree/ptree.hpp> // Para leer el .ini
 #include <boost/property_tree/ini_parser.hpp>
 #include <QCoreApplication>
+#include <unordered_set> // Para almacenar los diferentes artistas
 
 namespace fs = std::filesystem;
 namespace pt = boost::property_tree;
@@ -59,6 +60,26 @@ public:
     }
 
 
+    // Método para recorrer la lista y encontrar los diferentes artistas
+    void printArtists() {
+        std::unordered_set<std::string> uniqueArtists; // Conjunto para almacenar artistas únicos
+
+        Node* current = head;
+        while (current != nullptr) {
+
+            // Inserta el artista en el conjunto si no está repetido
+            uniqueArtists.insert(current->artist); // 'std::unordered_set' garantiza que no se agreguen elementos duplicados
+            current = current->next;
+        }
+
+        // Imprime los artistas almacenados en el conjunto
+        std::cout << "Diferentes artistas en la lista:" << std::endl;
+        for (const auto& artist : uniqueArtists) {
+            std::cout << artist << std::endl;
+        }
+    }
+
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +98,7 @@ principalLIst::principalLIst() { // Constructor de principalLIst
     //Abre el .ini para obtener la ruta de la carpeta
     try {
         pt::ptree tree;
-        pt::ini_parser::read_ini("/home/fabiangj/QtCMP/config.ini", tree); // CAMBIAR POR RUTA RELATIVA
+        pt::ini_parser::read_ini("/home/asly/Desktop/QtCMP/config.ini", tree); // CAMBIAR POR RUTA RELATIVA
 
         // Accede al path establecido en el archivo .ini
         std::string folderPath = tree.get<std::string>("music.musicFolderPath");
@@ -85,7 +106,9 @@ principalLIst::principalLIst() { // Constructor de principalLIst
 
         // Llama al método que detecta la cantidad de archivos en la carpeta
         listFilesInFolder(folderPath);
+
         //principalLinkedList.printForward();
+        principalLinkedList.printArtists();
 
     } catch(const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
