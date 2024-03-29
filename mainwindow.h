@@ -7,6 +7,7 @@
 #include <QtWidgets>
 #include <QTimer>
 #include <QProcess>
+#include <unordered_set>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -50,6 +51,8 @@ private slots:
     void on_checkBox_CommunityPlaylist_toggled(bool checked);
 
     void on_checkBox_Pagination_toggled(bool checked);
+
+    void updateUniqueSingers(const std::unordered_set<std::string>& uniqueArtists);
 
 public slots:
     void handleMediaStatusChanged(QMediaPlayer::MediaStatus status);

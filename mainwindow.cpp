@@ -6,6 +6,9 @@
 #include <fstream>
 #include <string>
 #include <unistd.h>
+#include <unordered_set>
+
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -49,6 +52,16 @@ MainWindow::MainWindow(QWidget *parent)
     principalLIst listaPrincipal; // llama al constructor principalLIst
 
     Node** nodeArray = listaPrincipal.getArrayList();
+
+    std::unordered_set<std::string> uniqueArtists = listaPrincipal.getUniqueArtists();
+    updateUniqueSingers(uniqueArtists);
+
+    // Imprime los artistas almacenados en el conjunto
+    std::cout << "Diferentes artistas en la lista:" << std::endl;
+    for (const auto& artist : uniqueArtists) {
+        std::cout << artist << std::endl;
+    };
+
 
     int numNodes = 0;
     while (nodeArray[numNodes] != nullptr) {
@@ -366,5 +379,25 @@ void MainWindow::playNextSong()
             MPlayer->setMedia(fileUrl);
             MPlayer->play();
         }
+    }
+}
+
+void MainWindow::updateUniqueSingers(const std::unordered_set<std::string>& uniqueArtists) {
+    QLayoutItem *child;
+    while ((child = ui->verticalLayout->takeAt(0)) != nullptr) {
+        delete child->widget();
+        delete child;
+    }
+
+    // Itera sobre los nombres de los artistas y agregar un botón para cada uno al layout vertical
+    for (const auto& artist : uniqueArtists) {
+        QPushButton *button = new QPushButton(QString::fromStdString(artist));
+        ui->verticalLayout->addWidget(button);
+
+        // Conectar la señal de clic del botón a una función para manejar el evento
+        connect(button, &QPushButton::clicked, [=]() {
+            std::cout << "Clic en el botón de " << artist << std::endl;
+            // ACÁ VA EL CÓDIGO QUE MOSTRARIA SOLO LAS CANCIONES DE DICHO CANTANTE EN LA INTERFAZ GRÁFICA
+        });
     }
 }

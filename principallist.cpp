@@ -106,7 +106,7 @@ public:
     }
 
     // Método para recorrer la lista y encontrar los diferentes artistas
-    void printArtists(CircularList& artistLists) {
+    void findArtists(CircularList& artistLists) {
         int index = 1;
         Node* current = head;
         while (current != nullptr) {
@@ -127,7 +127,7 @@ public:
     void printCircularLists(const CircularList& artistLists) {
         for (const auto& pair : artistLists.artistMap) {
             std::cout << "Artista: " << pair.first << std::endl;
-            std::cout << "Posiciones de Canciones:" << std::endl;
+            std::cout << "Posiciones de Canciones en la lista:" << std::endl;
 
             NodeC* current = pair.second;
             if (current) {
@@ -142,6 +142,20 @@ public:
 
             std::cout << std::endl;
         }
+    }
+
+    // Método para retornar solo los nombres de los artistas encontrados
+    std::unordered_set<std::string> getUniqueArtists() {
+        std::unordered_set<std::string> uniqueArtists; // Conjunto para almacenar artistas únicos
+
+        Node* current = head;
+        while (current != nullptr) {
+            // Inserta el artista en el conjunto si no está repetido
+            uniqueArtists.insert(current->artist); // 'std::unordered_set' garantiza que no se agreguen elementos duplicados
+            current = current->next;
+        }
+
+        return uniqueArtists;
     }
 
 };
@@ -177,9 +191,9 @@ principalLIst::principalLIst() { // Constructor de principalLIst
     } catch(const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
-    //principalLinkedList.printArtists();
-    principalLinkedList.printArtists(artistLists);
-    principalLinkedList.printCircularLists(artistLists);
+
+    principalLinkedList.findArtists(artistLists); //A partir de aquí se crean las listas circulares
+    //principalLinkedList.printArtistLists(artistLists);
 }
 
 Node** principalLIst::getArrayList() {
@@ -199,6 +213,11 @@ Node** principalLIst::getArrayList() {
 
     // Devuelve el array
     return nodeArray;
+}
+
+// Método para obtener la lista de artistas únicos
+std::unordered_set<std::string> principalLIst::getUniqueArtists() {
+    return principalLinkedList.getUniqueArtists();
 }
 
 
@@ -234,5 +253,3 @@ void loadAndPrintMetadata(const std::string& filePath) { // Método para cargar 
     } else {
         cout << "No se encontraron metadatos en el archivo." << endl;
     }}
-
-
