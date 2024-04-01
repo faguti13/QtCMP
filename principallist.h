@@ -1,21 +1,23 @@
 #ifndef PRINCIPALLIST_H
 #define PRINCIPALLIST_H
+#include "doublylinkedlist.h"
 #include <string>
-#include "Node.h"
-#include <unordered_set>
 
-class principalLIst
-{
+
+// Declaración de la clase principalList
+class principalList {
 public:
-    principalLIst();
-    Node** getArrayList();
-    std::unordered_set<std::string> getUniqueArtists();
+    //principalList(); // Constructor
+    principalList(doublyLinkedList&);
+
+    // Métodos para listar archivos y cargar metadatos
+    void listFilesInFolder(const std::string& folderPath, doublyLinkedList&);
+    void loadAndPrintMetadata(const std::string& filePath, doublyLinkedList&);
 };
 
 //Métodos
 void listFilesInFolder(const std::string& folderPath);
 void loadAndPrintMetadata(const std::string& filePath);
-void Prueba();
 
 #endif // PRINCIPALLIST_H
 

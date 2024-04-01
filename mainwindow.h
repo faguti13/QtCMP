@@ -1,5 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
+#include "Node.h"
+#include "circularlist.h"
 
 #include <QMainWindow>
 #include <QtMultimedia>
@@ -8,6 +10,8 @@
 #include <QTimer>
 #include <QProcess>
 #include <unordered_set>
+
+extern bool doubly;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -52,7 +56,12 @@ private slots:
 
     void on_checkBox_Pagination_toggled(bool checked);
 
-    void updateUniqueSingers(const std::unordered_set<std::string>& uniqueArtists);
+    void updateUniqueSingersAndSongs(const std::unordered_set<std::string>& uniqueArtists, circularList& curcularArtistList,
+                             doublyLinkedList& principalLinkedList, Node* nodeArray[]);
+
+    void updateAllSongsUI(Node* nodeArray[]);
+
+    void showDataInTableWidget(const std::vector<Node*>& nodes);
 
 public slots:
     void handleMediaStatusChanged(QMediaPlayer::MediaStatus status);

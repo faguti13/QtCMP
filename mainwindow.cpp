@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "principallist.h"
+#include "circularlist.h"
 #include "Node.h"
 #include <iostream>
 #include <fstream>
@@ -8,6 +9,7 @@
 #include <unistd.h>
 #include <unordered_set>
 
+bool doubly = true;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -49,59 +51,34 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->horizontalSlider_Audio_File_Duration->setRange(0,MPlayer->duration()/1000);
 
-    principalLIst listaPrincipal; // llama al constructor principalLIst
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    Node** nodeArray = listaPrincipal.getArrayList();
+    doublyLinkedList principalLinkedList; // Instancia de la clase doublyLinkedList. Acá todavía está vacía
 
-    std::unordered_set<std::string> uniqueArtists = listaPrincipal.getUniqueArtists();
-    updateUniqueSingers(uniqueArtists);
+    principalList principal(principalLinkedList); // Instancia de la clase principalList. principalLinkedList ya tiene elementos
 
-    // Imprime los artistas almacenados en el conjunto
-    std::cout << "Diferentes artistas en la lista:" << std::endl;
-    for (const auto& artist : uniqueArtists) {
-        std::cout << artist << std::endl;
-    };
+    Node* headPtr = principalLinkedList.getHead(); // Guarda el puntero al nodo inicial de la lista doblemente enlazada
 
+    Node** nodeArray = principalLinkedList.getArrayList(headPtr);
 
-    int numNodes = 0;
-    while (nodeArray[numNodes] != nullptr) {
-        ++numNodes;
-    }
+    //principalLinkedList.getPointerToDoublyLinkedList();
 
-    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->tableWidget->setRowCount(numNodes);
-    for (int i = 0; i < numNodes; ++i) {
-        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->title));
-        QTableWidgetItem *itemArtist = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->artist));
-        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->album));
-        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->genre));
-        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(nodeArray[i]->upVotes));
-        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(nodeArray[i]->downVotes));
+    circularList circularArtistList; // Instancia de la clase circularList
 
-        // Almacena la referencia del nodo en la columna 0
-        itemTitle->setData(Qt::UserRole, QVariant::fromValue(nodeArray[i]));
+    circularArtistList.findArtists(circularArtistList, headPtr); // Acá se crean las listas circulares
 
-        ui->tableWidget->setItem(i, 0, itemTitle);
-        ui->tableWidget->setItem(i, 1, itemArtist);
-        ui->tableWidget->setItem(i, 2, itemAlbum);
-        ui->tableWidget->setItem(i, 3, itemGenre);
-        ui->tableWidget->setItem(i, 4, itemUpVotes);
-        ui->tableWidget->setItem(i, 5, itemDownVotes);
-    }
+    std::unordered_set<std::string> uniqueArtists = circularArtistList.getUniqueArtists(headPtr); //Acá están los nombres de los dif. artistas
 
-    ui->tableWidget->setColumnWidth(0, 290);
-    ui->tableWidget->setColumnWidth(1, 150);
-    ui->tableWidget->setColumnWidth(2, 290);
-    ui->tableWidget->setColumnWidth(3, 120);
-    ui->tableWidget->setColumnWidth(4, 25);
-    ui->tableWidget->setColumnWidth(5, 25);
+    updateUniqueSingersAndSongs(uniqueArtists, circularArtistList, principalLinkedList, nodeArray);
+    updateAllSongsUI(nodeArray);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
 }
-
 
 
 MainWindow::~MainWindow()
 {
-    delete ui;    
+    delete ui;
 }
 
 void MainWindow::updateduration(qint64 duration)
@@ -176,6 +153,12 @@ void MainWindow::on_pushButton_Seek_Forward_clicked()
 {
     int nextIndex = currentSongIndex + 1;
 
+    if (nextIndex >= ui->tableWidget->rowCount()) {
+        if (not doubly) {
+            nextIndex = 0;
+        } else {}
+    }
+
     if (nextIndex < ui->tableWidget->rowCount()) {
         currentSongIndex = nextIndex;
 
@@ -213,6 +196,12 @@ void MainWindow::on_pushButton_Seek_Forward_clicked()
 void MainWindow::on_pushButton_Seek_Back_clicked()
 {
     int prevIndex = currentSongIndex - 1;
+
+    if (prevIndex < 0) {
+        if (not doubly) {
+            prevIndex = ui->tableWidget->rowCount() - 1;
+        } else {}
+    }
 
     if (prevIndex >= 0) {
         currentSongIndex = prevIndex;
@@ -382,12 +371,30 @@ void MainWindow::playNextSong()
     }
 }
 
-void MainWindow::updateUniqueSingers(const std::unordered_set<std::string>& uniqueArtists) {
+void MainWindow::updateUniqueSingersAndSongs(const std::unordered_set<std::string>& uniqueArtists,
+                                     circularList& circularArtistList,
+                                     doublyLinkedList& principalLinkedList, Node* nodeArray[]) {
     QLayoutItem *child;
     while ((child = ui->verticalLayout->takeAt(0)) != nullptr) {
         delete child->widget();
         delete child;
     }
+
+    // Botón con todos los artistas
+    QPushButton *button = new QPushButton("Todos los artistas");
+    ui->verticalLayout->addWidget(button);
+
+    connect(button, &QPushButton::clicked, [=]() {
+
+        bool paginationEnabled = ui->checkBox_Pagination->isChecked();
+        if (paginationEnabled) {
+            std::cout << "Paginacion activa. botón de todos los artistas" << std::endl;
+
+        } else {
+            updateAllSongsUI(nodeArray);
+
+        }
+    });
 
     // Itera sobre los nombres de los artistas y agregar un botón para cada uno al layout vertical
     for (const auto& artist : uniqueArtists) {
@@ -396,8 +403,95 @@ void MainWindow::updateUniqueSingers(const std::unordered_set<std::string>& uniq
 
         // Conectar la señal de clic del botón a una función para manejar el evento
         connect(button, &QPushButton::clicked, [=]() {
-            std::cout << "Clic en el botón de " << artist << std::endl;
-            // ACÁ VA EL CÓDIGO QUE MOSTRARIA SOLO LAS CANCIONES DE DICHO CANTANTE EN LA INTERFAZ GRÁFICA
+
+            bool paginationEnabled = ui->checkBox_Pagination->isChecked();
+
+            if (paginationEnabled) {
+                std::cout << "Paginacion activa. Clic en el botón de " << artist << std::endl;
+
+            } else {
+                circularArtistList.printCircularList(artist, circularArtistList);
+                std::vector<int> songIndices = circularArtistList.getSongIndices(artist, circularArtistList);
+                std::vector<Node*> nodes = principalLinkedList.getNodesAtIndices(songIndices, principalLinkedList);
+
+                showDataInTableWidget(nodes);
+            }
         });
     }
+}
+
+void MainWindow::updateAllSongsUI(Node* nodeArray[]) {
+    doubly = true;
+    int numNodes = 0;
+    while (nodeArray[numNodes] != nullptr) {
+        ++numNodes;
+    }
+
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableWidget->setRowCount(numNodes);
+    for (int i = 0; i < numNodes; ++i) {
+        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->title));
+        QTableWidgetItem *itemArtist = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->artist));
+        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->album));
+        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->genre));
+        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(nodeArray[i]->upVotes));
+        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(nodeArray[i]->downVotes));
+
+        // Almacena la referencia del nodo en la columna 0
+        itemTitle->setData(Qt::UserRole, QVariant::fromValue(nodeArray[i]));
+
+        ui->tableWidget->setItem(i, 0, itemTitle);
+        ui->tableWidget->setItem(i, 1, itemArtist);
+        ui->tableWidget->setItem(i, 2, itemAlbum);
+        ui->tableWidget->setItem(i, 3, itemGenre);
+        ui->tableWidget->setItem(i, 4, itemUpVotes);
+        ui->tableWidget->setItem(i, 5, itemDownVotes);
+    }
+
+    ui->tableWidget->setColumnWidth(0, 290);
+    ui->tableWidget->setColumnWidth(1, 150);
+    ui->tableWidget->setColumnWidth(2, 290);
+    ui->tableWidget->setColumnWidth(3, 120);
+    ui->tableWidget->setColumnWidth(4, 25);
+    ui->tableWidget->setColumnWidth(5, 25);
+}
+
+
+void MainWindow::showDataInTableWidget(const std::vector<Node*>& nodes) {
+    doubly = false;
+    // Limpia el contenido actual del tableWidget
+    ui->tableWidget->clear();
+
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    // Configurael número de filas del tableWidget
+    ui->tableWidget->setRowCount(nodes.size());
+
+    // Itera sobre los nodos y mostra los datos en el tableWidget
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        Node* node = nodes[i];
+        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(node->title));
+        QTableWidgetItem *itemArtist = new QTableWidgetItem(QString::fromStdString(node->artist));
+        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(node->album));
+        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(node->genre));
+        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(node->upVotes));
+        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(node->downVotes));
+
+        // Almacena la referencia del nodo en la columna 0
+        itemTitle->setData(Qt::UserRole, QVariant::fromValue(nodes[i]));
+
+        ui->tableWidget->setItem(i, 0, itemTitle);
+        ui->tableWidget->setItem(i, 1, itemArtist);
+        ui->tableWidget->setItem(i, 2, itemAlbum);
+        ui->tableWidget->setItem(i, 3, itemGenre);
+        ui->tableWidget->setItem(i, 4, itemUpVotes);
+        ui->tableWidget->setItem(i, 5, itemDownVotes);
+    }
+
+    ui->tableWidget->setColumnWidth(0, 290);
+    ui->tableWidget->setColumnWidth(1, 150);
+    ui->tableWidget->setColumnWidth(2, 290);
+    ui->tableWidget->setColumnWidth(3, 120);
+    ui->tableWidget->setColumnWidth(4, 25);
+    ui->tableWidget->setColumnWidth(5, 25);
 }

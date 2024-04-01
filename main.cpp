@@ -1,16 +1,22 @@
 #include "mainwindow.h"
-#include "principallist.h"
 #include <QApplication>
 #include "pagedarray.h"
 #include "Node.h"
 #include <iostream>
 #include "principallist.h"
+#include "doublylinkedlist.h"
+#include "circularlist.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;   
+    MainWindow w;
+
     w.show();
+
+    return a.exec();
+}
+
 /*
 
     principalLIst listaPrincipal; // llama al constructor principalLIst
@@ -48,5 +54,3 @@ int main(int argc, char *argv[])
     int indexToRemove = 5;
     pagedArray.remove(indexToRemove);
 */
-    return a.exec();
-}
