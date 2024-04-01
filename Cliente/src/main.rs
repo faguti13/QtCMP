@@ -1,3 +1,5 @@
+mod connection;
+
 use fltk::{app, prelude::*, window::Window, group::Group, button::Button};
 use fltk::enums::FrameType;
 use fltk::enums::Color;
@@ -5,7 +7,7 @@ use ini::ini;
 
 fn main() {
     let app = app::App::default();
-    let mut wind = Window::new(400, 100, 900, 600, "Cliente");
+    let mut wind = Window::new(400, 100, 450, 600, "Cliente");
 
     // Crear un contenedor para la lista de canciones
     let mut group = Group::new(10, 10, 680, 600, "");
@@ -65,5 +67,6 @@ fn main() {
     wind.end();
     wind.show();
 
+    connection::connect_client_to_server();
     app.run().unwrap();
 }
