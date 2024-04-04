@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     Node** nodeArray = listaPrincipal.getArrayList();  // Obtén el array de nodos
 
     // Ruta del archivo de swap
-    std::string swapFilePath = "/home/fabiangj/QtCMP/swap/swap.bin"; // Ajusta la ruta según tus necesidades
+    std::string swapFilePath = "/home/joaquin/QtCMP/swap/swap.bin"; // Ajusta la ruta según tus necesidades
 
     // Tamaño de página y máximo de nodos en el PagedArray
     int pageSize = 4096;  // Ajusta el tamaño de la página según tus necesidades

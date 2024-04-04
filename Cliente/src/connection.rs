@@ -34,7 +34,7 @@ pub fn connect_client_to_server() {
 //Nota:El path de la línea 36 se debe cambiar acorde a donde se encuentra la carpeta que tiene el .ini
 fn load_server_info() -> Option<(String, u16)> {
     let mut config = Ini::new();
-    if let Err(e) = config.load("/home/joaquin/QtCMP/config.ini") { //Busca el .ini sel server
+    if let Err(e) = config.load("/home/joaquin/QtCMP/config.ini") { //Busca el .ini sel server //CAMBIAR
     error!("Error al cargar el archivo de configuración: {}", e); //Mensaje de error en caso de que no se
         return None;
     }
