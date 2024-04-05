@@ -16,7 +16,7 @@ SOURCES += \
     mainwindow.cpp \
     pagedarray.cpp \
     principallist.cpp \
-    server.cpp
+    serverconnection.cpp
 
 HEADERS += \
     Node.h \
@@ -26,7 +26,7 @@ HEADERS += \
     mainwindow.h \
     pagedarray.h \
     principallist.h \
-    server.h
+    serverconnection.h
 
 FORMS += \
     mainwindow.ui
