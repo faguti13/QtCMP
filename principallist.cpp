@@ -1,6 +1,5 @@
 #include "principallist.h"
 #include "doublylinkedlist.h"
-
 #include <iostream>
 #include <taglib/taglib.h> //Para los metadatos
 #include <taglib/mpegfile.h>
@@ -24,7 +23,8 @@ principalList::principalList(doublyLinkedList& listInstance){
     //Abre el .ini para obtener la ruta de la carpeta
     try {
         pt::ptree tree;
-        pt::ini_parser::read_ini("/home/joaquin/QtCMP/config.ini", tree); // CAMBIAR POR RUTA RELATIVA
+        pt::ini_parser::read_ini("/home/fabiangj/QtCMP/config.ini",
+                                 tree); // CAMBIAR POR RUTA RELATIVA
 
         // Accede al path establecido en el archivo .ini
         std::string folderPath = tree.get<std::string>("music.musicFolderPath");

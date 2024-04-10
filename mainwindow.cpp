@@ -1,15 +1,34 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "principallist.h"
-#include "circularlist.h"
 #include "Node.h"
-#include <iostream>
+#include "circularlist.h"
+#include "principallist.h"
+#include "serverconnection.h"
+#include "ui_mainwindow.h"
 #include <fstream>
+#include <iostream>
+#include <random>
 #include <string>
 #include <unistd.h>
 #include <unordered_set>
 
 bool doubly = true;
+
+doublyLinkedList principalLinkedList; // Instancia de la clase doublyLinkedList. Acá todavía está vacía
+
+principalList principal(
+    principalLinkedList); // Instancia de la clase principalList. principalLinkedList ya tiene elementos
+
+Node *headPtr = principalLinkedList
+                    .getHead(); // Guarda el puntero al nodo inicial de la lista doblemente enlazada
+
+Node **nodeArray = principalLinkedList.getArrayList(headPtr);
+
+//principalLinkedList.getPointerToDoublyLinkedList();
+
+circularList circularArtistList; // Instancia de la clase circularList
+
+std::unordered_set<std::string> uniqueArtists = circularArtistList.getUniqueArtists(
+    headPtr); //Acá están los nombres de los dif. artistas
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -53,21 +72,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    doublyLinkedList principalLinkedList; // Instancia de la clase doublyLinkedList. Acá todavía está vacía
-
-    principalList principal(principalLinkedList); // Instancia de la clase principalList. principalLinkedList ya tiene elementos
-
-    Node* headPtr = principalLinkedList.getHead(); // Guarda el puntero al nodo inicial de la lista doblemente enlazada
-
-    Node** nodeArray = principalLinkedList.getArrayList(headPtr);
-
-    //principalLinkedList.getPointerToDoublyLinkedList();
-
-    circularList circularArtistList; // Instancia de la clase circularList
-
-    circularArtistList.findArtists(circularArtistList, headPtr); // Acá se crean las listas circulares
-
-    std::unordered_set<std::string> uniqueArtists = circularArtistList.getUniqueArtists(headPtr); //Acá están los nombres de los dif. artistas
+    circularArtistList.findArtists(circularArtistList,
+                                   headPtr); // Acá se crean las listas circulares
 
     updateUniqueSingersAndSongs(uniqueArtists, circularArtistList, principalLinkedList, nodeArray);
     updateAllSongsUI(nodeArray);
@@ -315,15 +321,40 @@ void MainWindow::updateMemoryUsage()
 
 void MainWindow::on_checkBox_CommunityPlaylist_toggled(bool checked)
 {
-    if(checked == true){
-        std::cout<<"Community playlist on"<<std::endl;
-    }
-    else
-    {
-        std::cout<<"Community playlist off"<<std::endl;
+    if (checked == true) {
+        int numNodes = 0;
+        // Contar el número de nodos válidos en el array
+        while (nodeArray[numNodes] != nullptr) {
+            ++numNodes;
+        }
+        Node **communityArray = new Node *[10];
+        std::cout << "Community playlist on" << std::endl;
+
+        std::random_device rd;  // obtener un número aleatorio del hardware
+        std::mt19937 gen(rd()); // sembrar el generador
+        std::uniform_int_distribution<> distr(0, numNodes - 1); // definir el rango
+
+        std::unordered_set<int> selectedIndices; // para evitar duplicados
+
+        int count = 0;
+        while (count < 10) {
+            int index = distr(gen);
+            if (selectedIndices.find(index) == selectedIndices.end()) {
+                selectedIndices.insert(index);
+                communityArray[count] = nodeArray[index];
+                count++;
+            }
+        }
+        communityArray[11] = nullptr; // Marcar el último elemento como nullptr
+        // Ahora communityArray contiene las 10 canciones aleatorias
+        for (int i = 0; i < 10; ++i) {
+            std::cout << "Canción " << i + 1 << ": " << communityArray[i]->title << std::endl;
+        }
+        //updateAllSongsUI(communityArray);
+    } else {
+        std::cout << "Community playlist off" << std::endl;
     }
 }
-
 
 void MainWindow::on_checkBox_Pagination_toggled(bool checked)
 {
@@ -420,25 +451,27 @@ void MainWindow::updateUniqueSingersAndSongs(const std::unordered_set<std::strin
     }
 }
 
-void MainWindow::updateAllSongsUI(Node* nodeArray[]) {
+void MainWindow::updateAllSongsUI(Node *array[])
+{
     doubly = true;
     int numNodes = 0;
-    while (nodeArray[numNodes] != nullptr) {
+    while (array[numNodes] != nullptr) {
         ++numNodes;
     }
 
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableWidget->setRowCount(numNodes);
     for (int i = 0; i < numNodes; ++i) {
-        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->title));
-        QTableWidgetItem *itemArtist = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->artist));
-        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->album));
-        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->genre));
-        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(nodeArray[i]->upVotes));
-        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(nodeArray[i]->downVotes));
+        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(array[i]->title));
+        QTableWidgetItem *itemArtist = new QTableWidgetItem(
+            QString::fromStdString(array[i]->artist));
+        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(array[i]->album));
+        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(array[i]->genre));
+        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(array[i]->upVotes));
+        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(array[i]->downVotes));
 
         // Almacena la referencia del nodo en la columna 0
-        itemTitle->setData(Qt::UserRole, QVariant::fromValue(nodeArray[i]));
+        itemTitle->setData(Qt::UserRole, QVariant::fromValue(array[i]));
 
         ui->tableWidget->setItem(i, 0, itemTitle);
         ui->tableWidget->setItem(i, 1, itemArtist);
@@ -455,7 +488,6 @@ void MainWindow::updateAllSongsUI(Node* nodeArray[]) {
     ui->tableWidget->setColumnWidth(4, 25);
     ui->tableWidget->setColumnWidth(5, 25);
 }
-
 
 void MainWindow::showDataInTableWidget(const std::vector<Node*>& nodes) {
     doubly = false;
@@ -494,4 +526,26 @@ void MainWindow::showDataInTableWidget(const std::vector<Node*>& nodes) {
     ui->tableWidget->setColumnWidth(3, 120);
     ui->tableWidget->setColumnWidth(4, 25);
     ui->tableWidget->setColumnWidth(5, 25);
+}
+
+Node **MainWindow::createRandomArray(Node *sourceArray[], int numNodes)
+{
+    // Node **randomArray = new Node *[10];
+    // std::random_device rd;  // obtener un número aleatorio del hardware
+    // std::mt19937 gen(rd()); // sembrar el generador
+    // std::uniform_int_distribution<> distr(0, numNodes - 1); // definir el rango
+
+    // std::unordered_set<int> selectedIndices; // para evitar duplicados
+
+    // int count = 0;
+    // while (count < 10) {
+    //     int index = distr(gen);
+    //     if (selectedIndices.find(index) == selectedIndices.end()) {
+    //         selectedIndices.insert(index);
+    //         randomArray[count] = sourceArray[index];
+    //         count++;
+    //     }
+    // }
+
+    // return randomArray;
 }

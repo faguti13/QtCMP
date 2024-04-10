@@ -26,6 +26,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    Node** createRandomArray(Node* sourceArray[], int numNodes);
 
 private slots:
     void durationChanged(qint64 duration);

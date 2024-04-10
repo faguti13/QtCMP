@@ -1,19 +1,19 @@
-#include "mainwindow.h"
 #include <QApplication>
-#include "pagedarray.h"
 #include "Node.h"
-#include <iostream>
-#include "principallist.h"
-#include "doublylinkedlist.h"
 #include "circularlist.h"
+#include "doublylinkedlist.h"
+#include "mainwindow.h"
+#include "pagedarray.h"
+#include "principallist.h"
+#include "serverconnection.h"
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
-
+    Server s(&a);
     w.show();
-
     return a.exec();
 }
 

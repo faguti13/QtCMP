@@ -2,37 +2,42 @@
 #define PAGEDARRAY_H
 
 #include "Node.h"
+#include <fstream>
 #include <iostream>
-class PagedArray {
+
+class PagedArray
+{
 public:
-    PagedArray(int pageSize, int maxNodes, const std::string& swapFilePath);
+    PagedArray(int pageSize, const std::string& swapFilePath);
     ~PagedArray();
 
     void add(const Node& newNode);
     void remove(int index);
-    void writeToSwap(const Node& node, std::streampos position);
-    void readFromSwap(Node& node, std::streampos position);
-    int search(const Node& targetNode);
     Node getByIndex(int index);
 
 private:
-    void updatePagedArray();
-
-    struct ListNode {
+    struct ListNode
+    {
         Node node;
         ListNode* next;
+        ListNode* prev;
 
-        ListNode(const Node& n) : node(n), next(nullptr) {}
+        ListNode(const Node& n)
+            : node(n)
+            , next(nullptr)
+            , prev(nullptr)
+        {}
     };
 
-    int pageSize;
-    int maxNodes;
-    int bytesPerNode;
-    Node* array;
-    int usedNodesCount;  // Contador de nodos utilizados
-    ListNode* accessOrderHead;  // Puntero al inicio de la lista enlazada de orden de acceso
-    std::string swapFilePath;
+    void writeToSwap(const Node& node, std::streampos position);
+    void readFromSwap(Node& node, std::streampos position);
+    void updatePagedArray();
 
+    int pageSize;
+    int bytesPerNode;
+    ListNode* head;
+    ListNode* tail;
+    std::string swapFilePath;
 };
 
 #endif // PAGEDARRAY_H

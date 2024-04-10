@@ -1,6 +1,7 @@
-#include "connectionserver.h"
+#include "serverconnection.h".h "
 
-Server::Server(QObject *parent) : QObject(parent)
+Server::Server(QObject *parent)
+    : QObject(parent)
 {
     server = new QTcpServer(this);
 
