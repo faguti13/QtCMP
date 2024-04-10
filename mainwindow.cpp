@@ -319,40 +319,47 @@ void MainWindow::updateMemoryUsage()
     }
 }
 
+Server server;
+
 void MainWindow::on_checkBox_CommunityPlaylist_toggled(bool checked)
 {
     if (checked == true) {
-        int numNodes = 0;
-        // Contar el número de nodos válidos en el array
-        while (nodeArray[numNodes] != nullptr) {
-            ++numNodes;
-        }
-        Node **communityArray = new Node *[10];
+        MPlayer->stop();
         std::cout << "Community playlist on" << std::endl;
-
-        std::random_device rd;  // obtener un número aleatorio del hardware
-        std::mt19937 gen(rd()); // sembrar el generador
-        std::uniform_int_distribution<> distr(0, numNodes - 1); // definir el rango
-
-        std::unordered_set<int> selectedIndices; // para evitar duplicados
-
-        int count = 0;
-        while (count < 10) {
-            int index = distr(gen);
-            if (selectedIndices.find(index) == selectedIndices.end()) {
-                selectedIndices.insert(index);
-                communityArray[count] = nodeArray[index];
-                count++;
-            }
-        }
-        communityArray[11] = nullptr; // Marcar el último elemento como nullptr
-        // Ahora communityArray contiene las 10 canciones aleatorias
+        server.startServer();
+        Node **communityArray = principalLinkedList.getRandomArrayList(headPtr);
+        ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        ui->tableWidget->setRowCount(10);
         for (int i = 0; i < 10; ++i) {
-            std::cout << "Canción " << i + 1 << ": " << communityArray[i]->title << std::endl;
+            QTableWidgetItem *itemTitle = new QTableWidgetItem(
+                QString::fromStdString(communityArray[i]->title));
+            QTableWidgetItem *itemArtist = new QTableWidgetItem(
+                QString::fromStdString(communityArray[i]->artist));
+            QTableWidgetItem *itemAlbum = new QTableWidgetItem(
+                QString::fromStdString(communityArray[i]->album));
+            QTableWidgetItem *itemGenre = new QTableWidgetItem(
+                QString::fromStdString(communityArray[i]->genre));
+            QTableWidgetItem *itemUpVotes = new QTableWidgetItem(
+                QString::number(communityArray[i]->upVotes));
+            QTableWidgetItem *itemDownVotes = new QTableWidgetItem(
+                QString::number(communityArray[i]->downVotes));
+
+            // Almacena la referencia del nodo en la columna 0
+            itemTitle->setData(Qt::UserRole, QVariant::fromValue(communityArray[i]));
+
+            ui->tableWidget->setItem(i, 0, itemTitle);
+            ui->tableWidget->setItem(i, 1, itemArtist);
+            ui->tableWidget->setItem(i, 2, itemAlbum);
+            ui->tableWidget->setItem(i, 3, itemGenre);
+            ui->tableWidget->setItem(i, 4, itemUpVotes);
+            ui->tableWidget->setItem(i, 5, itemDownVotes);
         }
-        //updateAllSongsUI(communityArray);
+
     } else {
+        MPlayer->stop();
         std::cout << "Community playlist off" << std::endl;
+        server.stopServer();
+        updateAllSongsUI(nodeArray);
     }
 }
 
@@ -526,26 +533,4 @@ void MainWindow::showDataInTableWidget(const std::vector<Node*>& nodes) {
     ui->tableWidget->setColumnWidth(3, 120);
     ui->tableWidget->setColumnWidth(4, 25);
     ui->tableWidget->setColumnWidth(5, 25);
-}
-
-Node **MainWindow::createRandomArray(Node *sourceArray[], int numNodes)
-{
-    // Node **randomArray = new Node *[10];
-    // std::random_device rd;  // obtener un número aleatorio del hardware
-    // std::mt19937 gen(rd()); // sembrar el generador
-    // std::uniform_int_distribution<> distr(0, numNodes - 1); // definir el rango
-
-    // std::unordered_set<int> selectedIndices; // para evitar duplicados
-
-    // int count = 0;
-    // while (count < 10) {
-    //     int index = distr(gen);
-    //     if (selectedIndices.find(index) == selectedIndices.end()) {
-    //         selectedIndices.insert(index);
-    //         randomArray[count] = sourceArray[index];
-    //         count++;
-    //     }
-    // }
-
-    // return randomArray;
 }

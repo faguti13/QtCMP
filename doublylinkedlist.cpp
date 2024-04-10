@@ -1,6 +1,8 @@
 #include "doublylinkedlist.h"
-#include <iostream>
 #include "Node.h"
+#include <iostream>
+#include <random>
+#include <unordered_set>
 
 // Constructor (head y tail inicializados a nullptr)
 doublyLinkedList::doublyLinkedList() : head(nullptr), tail(nullptr) {}
@@ -59,6 +61,45 @@ Node** doublyLinkedList::getArrayList(Node* headPtr) {
 
     // Devuelve el array
     return nodeArray;
+}
+
+Node** doublyLinkedList::getRandomArrayList(Node* headPtr)
+{
+    const int maxSongs = 50;
+    Node** nodeArray = new Node*[maxSongs]; // Utiliza new para asignar memoria dinámica
+
+    // Inicializar el array a nullptr para asegurarse de que los elementos no inicializados sean seguros de usar
+    std::fill_n(nodeArray, maxSongs, nullptr);
+
+    // Recorre la lista enlazada y agrega los nodos al array
+    Node* current = headPtr;
+    int index = 0;
+    while (current != nullptr && index < maxSongs) {
+        nodeArray[index++] = current;
+        current = current->next;
+    }
+
+    Node** randomArray = new Node*[10];
+    std::random_device rd;  // obtener un número aleatorio del hardware
+    std::mt19937 gen(rd()); // sembrar el generador
+    std::uniform_int_distribution<> distr(0, index - 1); // definir el rango
+
+    std::unordered_set<int> selectedIndices; // para evitar duplicados
+
+    int count = 0;
+    while (count < 10) {
+        int index = distr(gen);
+        if (selectedIndices.find(index) == selectedIndices.end()) {
+            selectedIndices.insert(index);
+            randomArray[count] = nodeArray[index];
+            count++;
+        }
+    }
+    for (int i = 0; i < 10; ++i) {
+        std::cout << "Canción " << i + 1 << ": " << randomArray[i]->title << std::endl;
+    }
+    // Devuelve el array
+    return randomArray;
 }
 
 // Método para obtener los punteros a los nodos de la lista enlazada en las posiciones dadas

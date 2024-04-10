@@ -51,6 +51,8 @@ public:
 
     Node** getArrayList(Node*);
 
+    Node** getRandomArrayList(Node*);
+
     // Método para obtener los punteros a los nodos de la lista enlazada en las posiciones dadas
     std::vector<Node*> getNodesAtIndices(const std::vector<int>& indices, const doublyLinkedList& principalLinkedList) const;
 };
