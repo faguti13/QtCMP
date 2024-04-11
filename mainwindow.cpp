@@ -10,6 +10,9 @@
 #include <string>
 #include <unistd.h>
 #include <unordered_set>
+#include <QMutex>
+
+QMutex listMutex;
 
 bool doubly = true;
 
@@ -362,6 +365,9 @@ void MainWindow::on_checkBox_CommunityPlaylist_toggled(bool checked)
         updateAllSongsUI(nodeArray);
     }
 }
+/*void MainWindow::processDataFromServer(const QString& data) {
+    // Realiza las operaciones de la interfaz gráfica aquí
+}*/
 
 void MainWindow::on_checkBox_Pagination_toggled(bool checked)
 {
