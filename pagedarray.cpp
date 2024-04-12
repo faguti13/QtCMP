@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*#include "pagedarray.h"
 #include "Node.h"
 #include <iostream>
@@ -548,3 +549,5 @@ int pagedArray::readDownVotes(const std::string& nombreArchivo, const int numNod
     binaryFile.close();
     return downVotes;
 }
+=======
+>>>>>>> refs/remotes/origin/master

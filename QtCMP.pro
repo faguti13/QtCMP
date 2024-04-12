@@ -11,18 +11,22 @@ CONFIG += c++17
 SOURCES += \
     circularlist.cpp \
     doublylinkedlist.cpp \
+    jsonhandler.cpp \
     main.cpp \
     mainwindow.cpp \
     pagedarray.cpp \
-    principallist.cpp
+    principallist.cpp \
+    serverconnection.cpp
 
 HEADERS += \
     Node.h \
     circularlist.h \
     doublylinkedlist.h \
+    jsonhandler.h \
     mainwindow.h \
     pagedarray.h \
-    principallist.h
+    principallist.h \
+    serverconnection.h
 
 FORMS += \
     mainwindow.ui

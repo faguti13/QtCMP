@@ -1,14 +1,24 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "principallist.h"
-#include "circularlist.h"
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMutex>
 #include "Node.h"
+
 #include "pagedarray.h"
-#include <iostream>
+
+#include "circularlist.h"
+#include "principallist.h"
+#include "serverconnection.h"
+#include "ui_mainwindow.h"
 #include <fstream>
+#include <iostream>
+#include <random>
 #include <string>
 #include <unistd.h>
 #include <unordered_set>
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <QMetaType>
@@ -16,7 +26,7 @@
 Q_DECLARE_METATYPE(std::string)
 
 namespace pt = boost::property_tree;
-
+QMutex listMutex;
 bool doubly = true;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -82,6 +92,9 @@ MainWindow::MainWindow(QWidget *parent)
     circularArtistList.findArtists(circularArtistList, headPtr); // Acá se crean las listas circulares
 
     std::unordered_set<std::string> uniqueArtists = circularArtistList.getUniqueArtists(headPtr); //Acá están los nombres de los dif. artistas
+
+    circularArtistList.findArtists(circularArtistList,headPtr); // Acá se crean las listas circulares
+
 
     updateUniqueSingersAndSongs(uniqueArtists, circularArtistList, principalLinkedList, nodeArray);
     updateAllSongsUI(nodeArray);
@@ -447,17 +460,53 @@ void MainWindow::updateMemoryUsage()
     }
 }
 
+Server server;
+
 void MainWindow::on_checkBox_CommunityPlaylist_toggled(bool checked)
 {
-    if(checked == true){
-        std::cout<<"Community playlist on"<<std::endl;
-    }
-    else
-    {
-        std::cout<<"Community playlist off"<<std::endl;
+    if (checked == true) {
+        MPlayer->stop();
+        std::cout << "Community playlist on" << std::endl;
+        server.startServer();
+        Node **communityArray = principalLinkedList.getRandomArrayList(headPtr);
+        ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        ui->tableWidget->setRowCount(10);
+        for (int i = 0; i < 10; ++i) {
+            QTableWidgetItem *itemTitle = new QTableWidgetItem(
+                QString::fromStdString(communityArray[i]->title));
+            QTableWidgetItem *itemArtist = new QTableWidgetItem(
+                QString::fromStdString(communityArray[i]->artist));
+            QTableWidgetItem *itemAlbum = new QTableWidgetItem(
+                QString::fromStdString(communityArray[i]->album));
+            QTableWidgetItem *itemGenre = new QTableWidgetItem(
+                QString::fromStdString(communityArray[i]->genre));
+            QTableWidgetItem *itemUpVotes = new QTableWidgetItem(
+                QString::number(communityArray[i]->upVotes));
+            QTableWidgetItem *itemDownVotes = new QTableWidgetItem(
+                QString::number(communityArray[i]->downVotes));
+
+            // Almacena la referencia del nodo en la columna 0
+            itemTitle->setData(Qt::UserRole, QVariant::fromValue(communityArray[i]));
+
+            ui->tableWidget->setItem(i, 0, itemTitle);
+            ui->tableWidget->setItem(i, 1, itemArtist);
+            ui->tableWidget->setItem(i, 2, itemAlbum);
+            ui->tableWidget->setItem(i, 3, itemGenre);
+            ui->tableWidget->setItem(i, 4, itemUpVotes);
+            ui->tableWidget->setItem(i, 5, itemDownVotes);
+        }
+        createJsonFromArray(communityArray, 10, "communityArray.json");
+
+    } else {
+        MPlayer->stop();
+        std::cout << "Community playlist off" << std::endl;
+        server.stopServer();
+        updateAllSongsUI(nodeArray);
     }
 }
-
+/*void MainWindow::processDataFromServer(const QString& data) {
+    // Realiza las operaciones de la interfaz gráfica aquí
+}*/
 
 void MainWindow::on_checkBox_Pagination_toggled(bool checked)
 {
@@ -604,25 +653,27 @@ void MainWindow::updateUniqueSingersAndSongs(const std::unordered_set<std::strin
     }
 }
 
-void MainWindow::updateAllSongsUI(Node* nodeArray[]) {
+void MainWindow::updateAllSongsUI(Node *array[])
+{
     doubly = true;
     int numNodes = 0;
-    while (nodeArray[numNodes] != nullptr) {
+    while (array[numNodes] != nullptr) {
         ++numNodes;
     }
 
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableWidget->setRowCount(numNodes);
     for (int i = 0; i < numNodes; ++i) {
-        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->title));
-        QTableWidgetItem *itemArtist = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->artist));
-        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->album));
-        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(nodeArray[i]->genre));
-        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(nodeArray[i]->upVotes));
-        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(nodeArray[i]->downVotes));
+        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(array[i]->title));
+        QTableWidgetItem *itemArtist = new QTableWidgetItem(
+            QString::fromStdString(array[i]->artist));
+        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(array[i]->album));
+        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(array[i]->genre));
+        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(array[i]->upVotes));
+        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(array[i]->downVotes));
 
         // Almacena la referencia del nodo en la columna 0
-        itemTitle->setData(Qt::UserRole, QVariant::fromValue(nodeArray[i]));
+        itemTitle->setData(Qt::UserRole, QVariant::fromValue(array[i]));
 
         ui->tableWidget->setItem(i, 0, itemTitle);
         ui->tableWidget->setItem(i, 1, itemArtist);
@@ -639,7 +690,6 @@ void MainWindow::updateAllSongsUI(Node* nodeArray[]) {
     ui->tableWidget->setColumnWidth(4, 25);
     ui->tableWidget->setColumnWidth(5, 25);
 }
-
 
 void MainWindow::showDataInTableWidget(const std::vector<Node*>& nodes) {
     doubly = false;
@@ -679,6 +729,7 @@ void MainWindow::showDataInTableWidget(const std::vector<Node*>& nodes) {
     ui->tableWidget->setColumnWidth(4, 25);
     ui->tableWidget->setColumnWidth(5, 25);
 }
+
 
 
 
@@ -805,4 +856,32 @@ void MainWindow::showDataInTableWidgetPaging(const std::vector<int> songIndices)
     ui->tableWidget->setColumnWidth(3, 120);
     ui->tableWidget->setColumnWidth(4, 25);
     ui->tableWidget->setColumnWidth(5, 25);
+}
+
+void MainWindow::createJsonFromArray(Node *array[], int size, const QString &filename) {
+    // Crear el objeto JSON y agregar los elementos del array
+    QJsonArray jsonArray;
+    for (int i = 0; i < size; ++i) {
+        QJsonObject jsonObj;
+        jsonObj["title"] = QString::fromStdString(array[i]->title);
+        jsonObj["upVotes"] = array[i]->upVotes;
+        jsonObj["downVotes"] = array[i]->downVotes;
+        jsonArray.append(jsonObj);
+    }
+
+    // Crear el documento JSON y guardarlo en un archivo
+    QJsonDocument jsonDoc(jsonArray);
+    QFile jsonFile(filename);
+    if (!jsonFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Error opening JSON file for writing:" << jsonFile.errorString();
+        return;
+    }
+
+    jsonFile.write(jsonDoc.toJson());
+    jsonFile.close();
+
+    // Imprimir el contenido del JSON creado
+    qDebug() << "JSON content:";
+    qDebug().noquote() << jsonDoc.toJson(QJsonDocument::Indented);
+
 }
