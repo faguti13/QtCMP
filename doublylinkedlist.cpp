@@ -79,4 +79,30 @@ std::vector<Node*> doublyLinkedList::getNodesAtIndices(const std::vector<int>& i
     return nodes;
 }
 
+// Método para liberar la lista
+void doublyLinkedList::clear() {
+    Node* current = head;
+    while (current != nullptr) {
+        Node* nextNode = current->next;
+        delete current; // Libera la memoria del nodo actual
+        current = nextNode; // Avanza al siguiente nodo
+    }
+    // Establece los punteros de cabeza y cola a nullptr para indicar que la lista está vacía
+    head = nullptr;
+    tail = nullptr;
+}
+
+
+// Método para obtener la cantidad de nodos en la lista
+int doublyLinkedList::getNodeCount() const {
+    int count = 0;
+    Node* current = head;
+    while (current != nullptr) {
+        count++;
+        current = current->next;
+    }
+    return count;
+}
+
+
 

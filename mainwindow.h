@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 #include "Node.h"
 #include "circularlist.h"
+#include "pagedarray.h"
 
 #include <QMainWindow>
 #include <QtMultimedia>
@@ -55,13 +56,19 @@ private slots:
     void on_checkBox_CommunityPlaylist_toggled(bool checked);
 
     void on_checkBox_Pagination_toggled(bool checked);
-
+    //void on_checkBox_Pagination_toggled(bool checked, doublyLinkedList& principalLinkedList, Node* headPtr);
     void updateUniqueSingersAndSongs(const std::unordered_set<std::string>& uniqueArtists, circularList& curcularArtistList,
                              doublyLinkedList& principalLinkedList, Node* nodeArray[]);
 
     void updateAllSongsUI(Node* nodeArray[]);
 
     void showDataInTableWidget(const std::vector<Node*>& nodes);
+
+    void updateAllSongsUIPaging(const std::string& folderPath, int allowedNodesForPage);
+
+    void popUp();
+
+    void showDataInTableWidgetPaging(const std::vector<int> songIndices);
 
 public slots:
     void handleMediaStatusChanged(QMediaPlayer::MediaStatus status);
@@ -76,6 +83,19 @@ private:
     QMediaPlayer *MPlayer;
     qint64 Mduration;
     QTimer *memoryUpdateTimer;
+    doublyLinkedList principalLinkedList; // Declarar principalLinkedList como miembro privado
+    const pagedArray pa;
+    Node* headPtr; // Declarar headPtr como miembro privado
+    int numSongs;
+    Node** nodeArray;
+
+
+
+    std::string state;
+    int allowedNodesForPage;
+    int allowedNodes;
+    int bytesPageSize;
+    std::string swapFolderPath;
 
 };
 #endif // MAINWINDOW_H

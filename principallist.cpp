@@ -60,6 +60,8 @@ void principalList::loadAndPrintMetadata(const std::string& filePath, doublyLink
     // Acceder a los tags
     if (tag) {
 
+        //std::cout<<"TAg de enlace" << filePath <<std::endl;
+
         // Inserta los metadatos en un nodo de la lista
         listInstance.insertEnd(tag->title().toCString(true), tag->artist().toCString(true), tag->album().toCString(true),
                                        tag->genre().toCString(true), filePath, 0, 0);

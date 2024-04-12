@@ -3,11 +3,19 @@
 #include "principallist.h"
 #include "circularlist.h"
 #include "Node.h"
+#include "pagedarray.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <unistd.h>
 #include <unordered_set>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <QMetaType>
+
+Q_DECLARE_METATYPE(std::string)
+
+namespace pt = boost::property_tree;
 
 bool doubly = true;
 
@@ -47,19 +55,25 @@ MainWindow::MainWindow(QWidget *parent)
     connect(MPlayer,&QMediaPlayer::durationChanged,this, &MainWindow::durationChanged);
     connect(MPlayer,&QMediaPlayer::positionChanged,this, &MainWindow::positionChanged);
 
+    connect(ui->checkBox_Pagination, &QCheckBox::toggled, this, &MainWindow::on_checkBox_Pagination_toggled);
+
+
     connect(ui->tableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(on_tableWidget_cellClicked(int, int)));
 
     ui->horizontalSlider_Audio_File_Duration->setRange(0,MPlayer->duration()/1000);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    doublyLinkedList principalLinkedList; // Instancia de la clase doublyLinkedList. Acá todavía está vacía
+    //doublyLinkedList principalLinkedList; // Instancia de la clase doublyLinkedList. Acá todavía está vacía
 
     principalList principal(principalLinkedList); // Instancia de la clase principalList. principalLinkedList ya tiene elementos
 
-    Node* headPtr = principalLinkedList.getHead(); // Guarda el puntero al nodo inicial de la lista doblemente enlazada
+    headPtr = principalLinkedList.getHead(); // Guarda el puntero al nodo inicial de la lista doblemente enlazada
+    numSongs = principalLinkedList.getNodeCount();
 
-    Node** nodeArray = principalLinkedList.getArrayList(headPtr);
+    //std::cout<< headPtr<<std::endl;
+
+    nodeArray = principalLinkedList.getArrayList(headPtr);
 
     //principalLinkedList.getPointerToDoublyLinkedList();
 
@@ -80,6 +94,8 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+
 
 void MainWindow::updateduration(qint64 duration)
 {
@@ -159,38 +175,78 @@ void MainWindow::on_pushButton_Seek_Forward_clicked()
         } else {}
     }
 
-    if (nextIndex < ui->tableWidget->rowCount()) {
-        currentSongIndex = nextIndex;
+    bool paginationEnabled = ui->checkBox_Pagination->isChecked();
+    if (paginationEnabled) {
 
-        QTableWidgetItem *nextItem = ui->tableWidget->item(nextIndex, 0);
+        if (nextIndex < ui->tableWidget->rowCount()) {
+            currentSongIndex = nextIndex;
 
-        if (nextItem && nextItem->data(Qt::UserRole).isValid()) {
-            // Obtén el nodo asociado a la celda de la siguiente canción
-            Node* nextNode = qvariant_cast<Node*>(nextItem->data(Qt::UserRole));
+            QTableWidgetItem *nextItem = ui->tableWidget->item(nextIndex, 0);
 
-            // Obtén la información de la siguiente canción
-            std::string songName = nextItem->text().toStdString();
-            std::string artistName = ui->tableWidget->item(nextIndex, 1)->text().toStdString();
-            std::string albumName = ui->tableWidget->item(nextIndex, 2)->text().toStdString();
-            std::string genre = ui->tableWidget->item(nextIndex, 3)->text().toStdString();
+            if (nextItem && nextItem->data(Qt::UserRole).isValid()) {
+                // Obtener el path del archivo de la siguiente canción
+                std::string filePath = nextItem->data(Qt::UserRole).toString().toStdString();
 
-            // Establece la información en el label
-            QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
-            ui->label_File_Name->setText(songInfo);
+                // Obtener la información de la siguiente canción
+                std::string songName = nextItem->text().toStdString();
+                std::string artistName = ui->tableWidget->item(nextIndex, 1)->text().toStdString();
+                std::string albumName = ui->tableWidget->item(nextIndex, 2)->text().toStdString();
+                std::string genre = ui->tableWidget->item(nextIndex, 3)->text().toStdString();
 
-            // Obtén el path del archivo de la siguiente canción
-            std::string filePath = nextNode->reference;
+                // Establecer la información en el label
+                QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+                ui->label_File_Name->setText(songInfo);
 
-            // Convierte la ruta a un formato compatible con URI
-            QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+                // Convierte la ruta a un formato compatible con URI
+                QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
 
-            // Establece la URL en el reproductor multimedia
-            MPlayer->setMedia(fileUrl);
+                // Establecer la URL en el reproductor multimedia
+                MPlayer->setMedia(fileUrl);
 
-            // Inicia la reproducción de la siguiente canción
-            MPlayer->play();
+                // Iniciar la reproducción de la siguiente canción
+                MPlayer->play();
+            }
         }
+
+    } else {
+
+        if (nextIndex < ui->tableWidget->rowCount()) {
+            currentSongIndex = nextIndex;
+
+            QTableWidgetItem *nextItem = ui->tableWidget->item(nextIndex, 0);
+
+            if (nextItem && nextItem->data(Qt::UserRole).isValid()) {
+                // Obtén el nodo asociado a la celda de la siguiente canción
+                Node* nextNode = qvariant_cast<Node*>(nextItem->data(Qt::UserRole));
+
+                // Obtén la información de la siguiente canción
+                std::string songName = nextItem->text().toStdString();
+                std::string artistName = ui->tableWidget->item(nextIndex, 1)->text().toStdString();
+                std::string albumName = ui->tableWidget->item(nextIndex, 2)->text().toStdString();
+                std::string genre = ui->tableWidget->item(nextIndex, 3)->text().toStdString();
+
+                // Establece la información en el label
+                QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+                ui->label_File_Name->setText(songInfo);
+
+                // Obtén el path del archivo de la siguiente canción
+                std::string filePath = nextNode->reference;
+
+                // Convierte la ruta a un formato compatible con URI
+                QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+
+                // Establece la URL en el reproductor multimedia
+                MPlayer->setMedia(fileUrl);
+
+                // Inicia la reproducción de la siguiente canción
+                MPlayer->play();
+            }
+        }
+
     }
+
+
+
 }
 
 void MainWindow::on_pushButton_Seek_Back_clicked()
@@ -203,38 +259,80 @@ void MainWindow::on_pushButton_Seek_Back_clicked()
         } else {}
     }
 
-    if (prevIndex >= 0) {
-        currentSongIndex = prevIndex;
 
-        QTableWidgetItem *prevItem = ui->tableWidget->item(prevIndex, 0);
+    bool paginationEnabled = ui->checkBox_Pagination->isChecked();
+    if (paginationEnabled) {
 
-        if (prevItem && prevItem->data(Qt::UserRole).isValid()) {
-            // Obtén el nodo asociado a la celda de la canción anterior
-            Node* prevNode = qvariant_cast<Node*>(prevItem->data(Qt::UserRole));
 
-            // Obtén la información de la canción anterior
-            std::string songName = prevItem->text().toStdString();
-            std::string artistName = ui->tableWidget->item(prevIndex, 1)->text().toStdString();
-            std::string albumName = ui->tableWidget->item(prevIndex, 2)->text().toStdString();
-            std::string genre = ui->tableWidget->item(prevIndex, 3)->text().toStdString();
+        if (prevIndex >= 0) {
+            currentSongIndex = prevIndex;
 
-            // Establece la información en el label
-            QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
-            ui->label_File_Name->setText(songInfo);
+            QTableWidgetItem *prevItem = ui->tableWidget->item(prevIndex, 0);
 
-            // Obtén el path del archivo de la canción anterior
-            std::string filePath = prevNode->reference;
+            if (prevItem && prevItem->data(Qt::UserRole).isValid()) {
+                // Nodo asociado a la celda de la canción anterior
+                std::string filePath = prevItem->data(Qt::UserRole).toString().toStdString();
 
-            // Convierte la ruta a un formato compatible con URI
-            QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
 
-            // Establece la URL en el reproductor multimedia
-            MPlayer->setMedia(fileUrl);
+                //  información de la canción anterior
+                std::string songName = prevItem->text().toStdString();
+                std::string artistName = ui->tableWidget->item(prevIndex, 1)->text().toStdString();
+                std::string albumName = ui->tableWidget->item(prevIndex, 2)->text().toStdString();
+                std::string genre = ui->tableWidget->item(prevIndex, 3)->text().toStdString();
 
-            // Inicia la reproducción de la canción anterior
-            MPlayer->play();
+                // Establece la información en el label
+                QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+                ui->label_File_Name->setText(songInfo);
+
+                // Convierte la ruta a un formato compatible con URI
+                QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+
+                // Establece la URL en el reproductor multimedia
+                MPlayer->setMedia(fileUrl);
+
+                // Inicia la reproducción de la canción anterior
+                MPlayer->play();
+            }
         }
+
+    } else {
+        if (prevIndex >= 0) {
+            currentSongIndex = prevIndex;
+
+            QTableWidgetItem *prevItem = ui->tableWidget->item(prevIndex, 0);
+
+            if (prevItem && prevItem->data(Qt::UserRole).isValid()) {
+                // Nodo asociado a la celda de la canción anterior
+                Node* prevNode = qvariant_cast<Node*>(prevItem->data(Qt::UserRole));
+
+                //  información de la canción anterior
+                std::string songName = prevItem->text().toStdString();
+                std::string artistName = ui->tableWidget->item(prevIndex, 1)->text().toStdString();
+                std::string albumName = ui->tableWidget->item(prevIndex, 2)->text().toStdString();
+                std::string genre = ui->tableWidget->item(prevIndex, 3)->text().toStdString();
+
+                // Establece la información en el label
+                QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+                ui->label_File_Name->setText(songInfo);
+
+                //  del archivo de la canción anterior
+                std::string filePath = prevNode->reference;
+
+                // Convierte la ruta a un formato compatible con URI
+                QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+
+                // Establece la URL en el reproductor multimedia
+                MPlayer->setMedia(fileUrl);
+
+                // Inicia la reproducción de la canción anterior
+                MPlayer->play();
+            }
+        }
+
     }
+
+
+
 }
 
 
@@ -260,35 +358,71 @@ void MainWindow::on_horizontalSlider_Audio_Volume_valueChanged(int value)
 
 void MainWindow::on_tableWidget_cellClicked(int row, int column)
 {
-    if (column == 0) {
-        QTableWidgetItem *item = ui->tableWidget->item(row, column);
+    bool paginationEnabled = ui->checkBox_Pagination->isChecked();
+    if (paginationEnabled) { // Cuando se trabaja con paginacion
+        if (column == 0) {
+            QTableWidgetItem *item = ui->tableWidget->item(row, column);
 
-        // Verifica si el elemento tiene datos asociados
-        if (item && item->data(Qt::UserRole).isValid()) {
-            // Obtén el nodo asociado a la celda
-            Node* node = qvariant_cast<Node*>(item->data(Qt::UserRole));
+            // Verifica si el elemento tiene datos asociados
+            if (item && item->data(Qt::UserRole).isValid()) {
+                // Obtener la información de la canción directamente del QTableWidgetItem
+                std::string songName = item->text().toStdString();
+                std::string artistName = ui->tableWidget->item(row, 1)->text().toStdString();
+                std::string albumName = ui->tableWidget->item(row, 2)->text().toStdString();
+                std::string genre = ui->tableWidget->item(row, 3)->text().toStdString();
+                std::string reference = item->data(Qt::UserRole).toString().toStdString(); // Obtener la referencia del archivo
 
-            // Obtén la información de la canción
-            std::string songName = item->text().toStdString();
-            std::string artistName = ui->tableWidget->item(row, 1)->text().toStdString();
-            std::string albumName = ui->tableWidget->item(row, 2)->text().toStdString();
-            std::string genre = ui->tableWidget->item(row, 3)->text().toStdString();
+                // Establece la información en el label
+                QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+                ui->label_File_Name->setText(songInfo);
 
-            // Establece la información en el label
-            QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
-            ui->label_File_Name->setText(songInfo);
+                // Obtiene el path del archivo de la canción
+                std::string filePath = reference;
+                //std::cout<< "file path en reproducir" << filePath <<std::endl;
 
-            // Obtén el path del archivo de la canción
-            std::string filePath = node->reference;
+                // Convierte la ruta a un formato compatible con URI
+                QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
 
-            // Convierte la ruta a un formato compatible con URI
-            QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+                // Establece la URL en el reproductor multimedia
+                MPlayer->setMedia(fileUrl);
 
-            // Establece la URL en el reproductor multimedia
-            MPlayer->setMedia(fileUrl);
+                // Inicia la reproducción
+                MPlayer->play();
+            }
+        }
 
-            // Inicia la reproducción
-            MPlayer->play();
+    } else { // Cuando se trabaja con listas enlazadas
+
+        if (column == 0) {
+            QTableWidgetItem *item = ui->tableWidget->item(row, column);
+
+            // Verifica si el elemento tiene datos asociados
+            if (item && item->data(Qt::UserRole).isValid()) {
+                // Obtén el nodo asociado a la celda
+                Node* node = qvariant_cast<Node*>(item->data(Qt::UserRole));
+
+                // Obtener la información de la canción
+                std::string songName = item->text().toStdString();
+                std::string artistName = ui->tableWidget->item(row, 1)->text().toStdString();
+                std::string albumName = ui->tableWidget->item(row, 2)->text().toStdString();
+                std::string genre = ui->tableWidget->item(row, 3)->text().toStdString();
+
+                // Establece la información en el label
+                QString songInfo = QString::fromStdString("Now playing: " + songName + " - " + artistName + " - " + albumName + " (" + genre + ")");
+                ui->label_File_Name->setText(songInfo);
+
+                // Obtiene el path del archivo de la canción
+                std::string filePath = node->reference;
+
+                // Convierte la ruta a un formato compatible con URI
+                QUrl fileUrl = QUrl::fromLocalFile(QString::fromStdString(filePath));
+
+                // Establece la URL en el reproductor multimedia
+                MPlayer->setMedia(fileUrl);
+
+                // Inicia la reproducción
+                MPlayer->play();
+            }
         }
     }
 }
@@ -329,12 +463,50 @@ void MainWindow::on_checkBox_Pagination_toggled(bool checked)
 {
     if(checked == true){
         std::cout<<"Pagination on"<<std::endl;
+
+
+
+        try {
+            pt::ptree tree;
+            pt::ini_parser::read_ini("/home/asly/Desktop/QtCMP/config.ini", tree); // CAMBIAR POR RUTA RELATIVA
+
+            state = tree.get<std::string>("pagination.state");
+            allowedNodes = std::stoi(tree.get<std::string>("pagination.allowedNodesForPage"));
+            bytesPageSize = std::stoi(tree.get<std::string>("pagination.bytesPageSize"));
+            swapFolderPath = tree.get<std::string>("pagination.swapFolderPath");
+
+        } catch(const std::exception& ex) {
+            std::cerr << "Error: " << ex.what() << std::endl;
+        }
+
+        if ((bytesPageSize % 478 == 0) & ((bytesPageSize / 474)==allowedNodes)) { //Condición para que los nodos quepan completos
+            std::cout<<"Pagination aprobada"<<std::endl;
+            allowedNodesForPage = bytesPageSize / 474;
+            //std::cout<< allowedNodesForPage<<std::endl;
+
+            pa.toBinary(pa, swapFolderPath.c_str(), headPtr, allowedNodesForPage);
+
+            updateAllSongsUIPaging(swapFolderPath,allowedNodesForPage);
+
+            //principalLinkedList.clear();
+
+        } else{
+            popUp();
+            std::cout<<"Saliendo"<<std::endl;
+            return;
+        }
     }
     else
     {
+        updateAllSongsUI(nodeArray);
         std::cout<<"Pagination off"<<std::endl;
     }
 }
+
+void MainWindow::popUp() {
+    QMessageBox::information(this, "Warning", "Make sure that the size set in the .ini for each binary page is a multiple of 478");
+}
+
 
 void MainWindow::handleMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
@@ -408,6 +580,18 @@ void MainWindow::updateUniqueSingersAndSongs(const std::unordered_set<std::strin
 
             if (paginationEnabled) {
                 std::cout << "Paginacion activa. Clic en el botón de " << artist << std::endl;
+                circularArtistList.printCircularList(artist, circularArtistList);
+                std::vector<int> songIndices = circularArtistList.getSongIndices(artist, circularArtistList);
+                for (int index : songIndices) {
+                    std::cout << " indice guardado " << index;
+                }
+                std::cout << std::endl;
+
+
+
+                showDataInTableWidgetPaging(songIndices);
+
+
 
             } else {
                 circularArtistList.printCircularList(artist, circularArtistList);
@@ -479,6 +663,133 @@ void MainWindow::showDataInTableWidget(const std::vector<Node*>& nodes) {
 
         // Almacena la referencia del nodo en la columna 0
         itemTitle->setData(Qt::UserRole, QVariant::fromValue(nodes[i]));
+
+        ui->tableWidget->setItem(i, 0, itemTitle);
+        ui->tableWidget->setItem(i, 1, itemArtist);
+        ui->tableWidget->setItem(i, 2, itemAlbum);
+        ui->tableWidget->setItem(i, 3, itemGenre);
+        ui->tableWidget->setItem(i, 4, itemUpVotes);
+        ui->tableWidget->setItem(i, 5, itemDownVotes);
+    }
+
+    ui->tableWidget->setColumnWidth(0, 290);
+    ui->tableWidget->setColumnWidth(1, 150);
+    ui->tableWidget->setColumnWidth(2, 290);
+    ui->tableWidget->setColumnWidth(3, 120);
+    ui->tableWidget->setColumnWidth(4, 25);
+    ui->tableWidget->setColumnWidth(5, 25);
+}
+
+
+
+void MainWindow::updateAllSongsUIPaging(const std::string& folderPath, int allowedNodesForPage) {
+
+    doubly = false;
+    int pagenum = 1;
+    int node = 0;
+    int i;
+    std::string binaryFile;
+
+    ui->tableWidget->clear(); // Limpia el contenido actual del tableWidget
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableWidget->setRowCount(numSongs); // Configura el número de filas del tableWidget
+
+    // Itera sobre los nodos y mostra los datos en el tableWidget
+    for (i = 0; i < numSongs; ++i) {
+
+        if (node == allowedNodesForPage) { // Verificar si se alcanzó el número máximo de nodos por página
+            node = 0; // Reiniciar el contador de nodos
+        }
+
+        if (node == 0){
+            binaryFile = std::string(folderPath) + "/page" + std::to_string(pagenum++) + ".bin";
+        }
+
+        //std::cout << "Llamada:  " << i << " / Valor de node " << node
+                  //<< " / archivo usado  " << binaryFile <<std::endl;
+
+        std::string title = pa.readTitle(binaryFile, node); //guardar la info del .bin
+        std::string artist = pa.readArtist(binaryFile, node);
+        std::string album = pa.readAlbum(binaryFile, node);
+        std::string genre = pa.readGenre(binaryFile, node);
+        std::string reference = pa.readReference(binaryFile, node);
+        int upVotes = pa.readUpVotes(binaryFile, node);
+        int downVotes = pa.readDownVotes(binaryFile, node);
+
+        node++;
+
+        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(title));
+        QTableWidgetItem *itemArtist = new QTableWidgetItem(QString::fromStdString(artist));
+        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(album));
+        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(genre));
+        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(upVotes));
+        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(downVotes));
+
+        // Almacena la referencia del nodo en la columna 0
+        //itemTitle->setData(Qt::UserRole, QVariant::fromValue(reference));
+        itemTitle->setData(Qt::UserRole, QVariant::fromValue(QString::fromStdString(reference)));
+
+        //std::cout<<reference<<std::endl;
+
+        ui->tableWidget->setItem(i, 0, itemTitle);
+        ui->tableWidget->setItem(i, 1, itemArtist);
+        ui->tableWidget->setItem(i, 2, itemAlbum);
+        ui->tableWidget->setItem(i, 3, itemGenre);
+        ui->tableWidget->setItem(i, 4, itemUpVotes);
+        ui->tableWidget->setItem(i, 5, itemDownVotes);
+        }
+
+        ui->tableWidget->setColumnWidth(0, 290);
+        ui->tableWidget->setColumnWidth(1, 150);
+        ui->tableWidget->setColumnWidth(2, 290);
+        ui->tableWidget->setColumnWidth(3, 120);
+        ui->tableWidget->setColumnWidth(4, 25);
+        ui->tableWidget->setColumnWidth(5, 25);
+}
+
+void MainWindow::showDataInTableWidgetPaging(const std::vector<int> songIndices) {
+    doubly = false;
+    int i;
+    std::string binaryFile;
+    int pagenum;
+
+    // Limpia el contenido actual del tableWidget
+    ui->tableWidget->clear();
+
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    // Configurael número de filas del tableWidget
+    ui->tableWidget->setRowCount(songIndices.size());
+
+    // Itera sobre los nodos y mostra los datos en el tableWidget
+    for (i = 0; i < songIndices.size(); ++i) {
+
+        int node = (songIndices[i]-1) % allowedNodes;
+        pagenum = (songIndices[i] + allowedNodes -1) / allowedNodes;
+
+        binaryFile = std::string(swapFolderPath) + "/page" + std::to_string(pagenum) + ".bin";
+
+
+        //std::cout << "Llamada:  " << songIndices[i] << " / Valor de node " << node
+                //<< " / archivo usado  " << binaryFile <<std::endl;
+
+
+        std::string title = pa.readTitle(binaryFile, node); //guardar la info del .bin
+        std::string artist = pa.readArtist(binaryFile, node);
+        std::string album = pa.readAlbum(binaryFile, node);
+        std::string genre = pa.readGenre(binaryFile, node);
+        std::string reference = pa.readReference(binaryFile, node);
+        int upVotes = pa.readUpVotes(binaryFile, node);
+        int downVotes = pa.readDownVotes(binaryFile, node);
+
+        QTableWidgetItem *itemTitle = new QTableWidgetItem(QString::fromStdString(title));
+        QTableWidgetItem *itemArtist = new QTableWidgetItem(QString::fromStdString(artist));
+        QTableWidgetItem *itemAlbum = new QTableWidgetItem(QString::fromStdString(album));
+        QTableWidgetItem *itemGenre = new QTableWidgetItem(QString::fromStdString(genre));
+        QTableWidgetItem *itemUpVotes = new QTableWidgetItem(QString::number(upVotes));
+        QTableWidgetItem *itemDownVotes = new QTableWidgetItem(QString::number(downVotes));
+
+        itemTitle->setData(Qt::UserRole, QVariant::fromValue(QString::fromStdString(reference)));
 
         ui->tableWidget->setItem(i, 0, itemTitle);
         ui->tableWidget->setItem(i, 1, itemArtist);
