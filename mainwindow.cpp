@@ -464,49 +464,61 @@ Server server;
 
 void MainWindow::on_checkBox_CommunityPlaylist_toggled(bool checked)
 {
-    if (checked == true) {
-        MPlayer->stop();
-        std::cout << "Community playlist on" << std::endl;
-        server.startServer();
-        Node **communityArray = principalLinkedList.getRandomArrayList(headPtr);
-        ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-        ui->tableWidget->setRowCount(10);
-        for (int i = 0; i < 10; ++i) {
-            QTableWidgetItem *itemTitle = new QTableWidgetItem(
-                QString::fromStdString(communityArray[i]->title));
-            QTableWidgetItem *itemArtist = new QTableWidgetItem(
-                QString::fromStdString(communityArray[i]->artist));
-            QTableWidgetItem *itemAlbum = new QTableWidgetItem(
-                QString::fromStdString(communityArray[i]->album));
-            QTableWidgetItem *itemGenre = new QTableWidgetItem(
-                QString::fromStdString(communityArray[i]->genre));
-            QTableWidgetItem *itemUpVotes = new QTableWidgetItem(
-                QString::number(communityArray[i]->upVotes));
-            QTableWidgetItem *itemDownVotes = new QTableWidgetItem(
-                QString::number(communityArray[i]->downVotes));
+    bool paginationEnabled = ui->checkBox_Pagination->isChecked();
+    if (paginationEnabled) {
+        if (checked == true) {
+            popUp2();
 
-            // Almacena la referencia del nodo en la columna 0
-            itemTitle->setData(Qt::UserRole, QVariant::fromValue(communityArray[i]));
-
-            ui->tableWidget->setItem(i, 0, itemTitle);
-            ui->tableWidget->setItem(i, 1, itemArtist);
-            ui->tableWidget->setItem(i, 2, itemAlbum);
-            ui->tableWidget->setItem(i, 3, itemGenre);
-            ui->tableWidget->setItem(i, 4, itemUpVotes);
-            ui->tableWidget->setItem(i, 5, itemDownVotes);
+        } else {
+            MPlayer->stop();
+            std::cout << "Community playlist off" << std::endl;
+            server.stopServer();
+            updateAllSongsUI(nodeArray);
         }
-        createJsonFromArray(communityArray, 10, "communityArray.json");
 
     } else {
-        MPlayer->stop();
-        std::cout << "Community playlist off" << std::endl;
-        server.stopServer();
-        updateAllSongsUI(nodeArray);
+
+        if (checked == true) {
+            MPlayer->stop();
+            std::cout << "Community playlist on" << std::endl;
+            server.startServer();
+            Node **communityArray = principalLinkedList.getRandomArrayList(headPtr);
+            ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+            ui->tableWidget->setRowCount(10);
+            for (int i = 0; i < 10; ++i) {
+                QTableWidgetItem *itemTitle = new QTableWidgetItem(
+                    QString::fromStdString(communityArray[i]->title));
+                QTableWidgetItem *itemArtist = new QTableWidgetItem(
+                    QString::fromStdString(communityArray[i]->artist));
+                QTableWidgetItem *itemAlbum = new QTableWidgetItem(
+                    QString::fromStdString(communityArray[i]->album));
+                QTableWidgetItem *itemGenre = new QTableWidgetItem(
+                    QString::fromStdString(communityArray[i]->genre));
+                QTableWidgetItem *itemUpVotes = new QTableWidgetItem(
+                    QString::number(communityArray[i]->upVotes));
+                QTableWidgetItem *itemDownVotes = new QTableWidgetItem(
+                    QString::number(communityArray[i]->downVotes));
+
+                // Almacena la referencia del nodo en la columna 0
+                itemTitle->setData(Qt::UserRole, QVariant::fromValue(communityArray[i]));
+
+                ui->tableWidget->setItem(i, 0, itemTitle);
+                ui->tableWidget->setItem(i, 1, itemArtist);
+                ui->tableWidget->setItem(i, 2, itemAlbum);
+                ui->tableWidget->setItem(i, 3, itemGenre);
+                ui->tableWidget->setItem(i, 4, itemUpVotes);
+                ui->tableWidget->setItem(i, 5, itemDownVotes);
+            }
+            createJsonFromArray(communityArray, 10, "communityArray.json");
+
+        } else {
+            MPlayer->stop();
+            std::cout << "Community playlist off" << std::endl;
+            server.stopServer();
+            updateAllSongsUI(nodeArray);
+        }
     }
 }
-/*void MainWindow::processDataFromServer(const QString& data) {
-    // Realiza las operaciones de la interfaz gráfica aquí
-}*/
 
 void MainWindow::on_checkBox_Pagination_toggled(bool checked)
 {
@@ -554,6 +566,10 @@ void MainWindow::on_checkBox_Pagination_toggled(bool checked)
 
 void MainWindow::popUp() {
     QMessageBox::information(this, "Warning", "Make sure that the size set in the .ini for each binary page is a multiple of 478");
+}
+
+void MainWindow::popUp2() {
+    QMessageBox::information(this, "Warning", "The community player option is not available to use with pagination, wait for new updates");
 }
 
 
@@ -609,6 +625,8 @@ void MainWindow::updateUniqueSingersAndSongs(const std::unordered_set<std::strin
 
         bool paginationEnabled = ui->checkBox_Pagination->isChecked();
         if (paginationEnabled) {
+
+            updateAllSongsUIPaging(swapFolderPath,allowedNodesForPage);
             std::cout << "Paginacion activa. botón de todos los artistas" << std::endl;
 
         } else {
@@ -631,16 +649,12 @@ void MainWindow::updateUniqueSingersAndSongs(const std::unordered_set<std::strin
                 std::cout << "Paginacion activa. Clic en el botón de " << artist << std::endl;
                 circularArtistList.printCircularList(artist, circularArtistList);
                 std::vector<int> songIndices = circularArtistList.getSongIndices(artist, circularArtistList);
-                for (int index : songIndices) {
+                /*for (int index : songIndices) {
                     std::cout << " indice guardado " << index;
                 }
-                std::cout << std::endl;
-
-
+                std::cout << std::endl;*/
 
                 showDataInTableWidgetPaging(songIndices);
-
-
 
             } else {
                 circularArtistList.printCircularList(artist, circularArtistList);

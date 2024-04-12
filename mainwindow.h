@@ -70,6 +70,7 @@ private slots:
     void updateAllSongsUIPaging(const std::string& folderPath, int allowedNodesForPage);
 
     void popUp();
+    void popUp2();
 
     void showDataInTableWidgetPaging(const std::vector<int> songIndices);
 

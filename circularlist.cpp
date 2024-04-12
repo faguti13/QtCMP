@@ -92,8 +92,8 @@ std::unordered_set<std::string> circularList::getUniqueArtists(Node* headPtr) {
 void circularList::printCircularList(const std::string& artistName, const circularList& artistLists) const {
     auto it = artistLists.artistMap.find(artistName);
     if (it != artistLists.artistMap.end()) {
-        std::cout << "Artista: " << artistName << std::endl;
-        std::cout << "Posiciones de Canciones en la lista:" << std::endl;
+        //std::cout << "Artista: " << artistName << std::endl;
+        //std::cout << "Posiciones de Canciones en la lista:" << std::endl;
 
         NodeC* current = it->second;
         if (current) {
@@ -121,10 +121,9 @@ std::vector<int> circularList::getSongIndices(const std::string& artistName, con
             do {
                 indices.push_back(current->index);
                 current = current->nextC;
-            } while (current != it->second);
+            } while (current != it->second && current->index != it->second->index);
         }
     }
     return indices;
 }
-
 
