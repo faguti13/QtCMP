@@ -28,6 +28,8 @@ public:
     ~MainWindow();
     Node** createRandomArray(Node* sourceArray[], int numNodes);
 
+    void createJsonFromArray(Node* array[], int size, const QString& filename);
+
 private slots:
     void durationChanged(qint64 duration);
 

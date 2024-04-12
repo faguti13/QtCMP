@@ -1,6 +1,8 @@
 #include "serverconnection.h"
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTcpSocket>
 
 Server::Server(QObject *parent)
     : QObject(parent)
@@ -58,6 +60,20 @@ void Server::dataClient()
     emit dataReceived(data); // Emite una señal con los datos recibidos
 }
 
+void Server::sendJsonToListeningClients(const QJsonObject &jsonObject)
+{
+    // Convertir el objeto JSON a un array de bytes para enviarlo por el socket
+    QByteArray jsonData = QJsonDocument(jsonObject).toJson();
+
+    // Recorrer todos los clientes conectados y enviarles los datos JSON
+    for (QTcpSocket *clientSocket : clientSockets) {
+        if (clientSocket && clientSocket->state() == QAbstractSocket::ConnectedState) {
+            clientSocket->write(jsonData);
+            clientSocket->flush();
+        }
+    }
+}
+
 /*//Manipulacion Json
 void Server::processRequest(const QString &request) {
     QJsonDocument doc = QJsonDocument::fromJson(request.toUtf8());
@@ -88,5 +104,4 @@ void Server::processRequest(const QString &request) {
     } else {
         qWarning() << "Acción no reconocida en la solicitud.";
     }
-}
-*/
+}*/

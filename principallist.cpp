@@ -23,7 +23,7 @@ principalList::principalList(doublyLinkedList& listInstance){
     //Abre el .ini para obtener la ruta de la carpeta
     try {
         pt::ptree tree;
-        pt::ini_parser::read_ini("/home/joaquin/QtCMP/config.ini",
+        pt::ini_parser::read_ini("/home/fabiangj/QtCMP/config.ini",
                                  tree); // CAMBIAR POR RUTA RELATIVA
 
         // Accede al path establecido en el archivo .ini

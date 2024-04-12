@@ -6,11 +6,13 @@ use std::thread::sleep;
 use serde_json;
 use serde::{Deserialize,Serialize};
 use std::io::{Write, Read};
+use serde_json::to_string_pretty;
+
 
 //Carga el valor del tiempo de .ini
 fn load_client_info()-> Option<u16> {
     let mut config = Ini::new();
-    if let Err(e) = config.load("/home/joaquin/Cliente/config.ini") { //Busca el .ini sel cliente
+    if let Err(e) = config.load("/home/fabiangj/QtCMP/Cliente/config.ini") { //Busca el .ini sel cliente
     error!("Error al cargar el archivo de configuración: {}", e); //Mensaje de error en caso de que no se encuentre el .ini
         return None;
     }
@@ -52,30 +54,43 @@ pub fn polling(stream: &mut TcpStream)-> Option<Vec<String>> {
     }
 }
 //Mediante el comando enviado se obtiente la playlist
-pub fn get_playlist(stream: &mut TcpStream) -> Option<Vec<Song>>{
-    let command = "Get-Playlist"; //Comando para obtener la Playlist
-    if let Err(e) = stream.write_all(command.as_bytes()) {//Se envía al server
-    error!("Error al enviar el comando al servidor: {}", e);
+pub fn get_playlist(stream: &mut TcpStream) -> Option<Vec<Song>> {
+    let command = "Get-Playlist"; // Comando para obtener la Playlist
+    if let Err(e) = stream.write_all(command.as_bytes()) { // Se envía al servidor
+        error!("Error al enviar el comando al servidor: {}", e);
         return None;
     }
-    let mut buffer = String::new();
-    if let Err(e) = stream.read_to_string(&mut buffer) {
+    
+    let mut buffer = Vec::new();
+    if let Err(e) = stream.read_to_end(&mut buffer) { // Lee el JSON del servidor
         error!("Error al recibir respuesta del servidor: {}", e);
         return None;
     }
-
-    if let Ok(response) = serde_json::from_str::<ServerResponse>(&buffer) { //Analiza la respuesta en Json mandada por el server
-        if response.status == "OK" && response.command == "playlist" {//Si se recibe la peticion correctamente
-            return response.playlist; //Se muestra el playlist (id, song, artist)
-        } else {
-            error!("Respuesta no válida: {:?}", response);//Si la respuesta recibida no es válida
+    
+    let json_str = match String::from_utf8(buffer) { // Convierte los bytes recibidos a String
+        Ok(s) => s,
+        Err(e) => {
+            error!("Error al convertir bytes a cadena UTF-8: {}", e);
+            return None;
         }
+    };
+    
+    let response: ServerResponse = match serde_json::from_str(&json_str) { // Parsea el JSON
+        Ok(r) => r,
+        Err(e) => {
+            error!("Error al parsear JSON: {}", e);
+            return None;
+        }
+    };
+    
+    if response.status == "OK" && response.command == "playlist" { // Verifica la respuesta del servidor
+        return response.playlist;
     } else {
-        error!("Error"); //Fallo del Json
+        error!("Respuesta no válida: {:?}", response);
+        return None;
     }
-    None
-
 }
+
 pub fn send_vote(stream: &mut TcpStream, song: &str, vote: &str){
     let vote_message = VoteMessage {
         song: String::from(song),
@@ -88,7 +103,7 @@ pub fn send_vote(stream: &mut TcpStream, song: &str, vote: &str){
         error!("Error al enviar el voto al servidor: {}", e);
     }
 }
-#[derive(Debug,Deserialize)]
+#[derive(Debug,Deserialize,Serialize)]
 pub struct Song {
     //Datos de cada canción
     pub id: u64,
@@ -109,3 +124,17 @@ pub struct ServerResponse {
     pub playlist: Option<Vec<Song>>,
 }
 
+pub fn print_playlist(playlist: &Option<Vec<Song>>) {
+    match playlist {
+        Some(songs) => {
+            if let Ok(json_str) = serde_json::to_string_pretty(&songs) {
+                println!("Playlist JSON:\n{}", json_str);
+            } else {
+                error!("Error al convertir la playlist a JSON");
+            }
+        },
+        None => {
+            println!("La playlist está vacía.");
+        }
+    }
+}

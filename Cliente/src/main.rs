@@ -8,6 +8,8 @@ use std::thread;
 use polling::send_vote;
 use crate::polling::polling;
 use std::sync::{Arc, Mutex};
+use polling::{get_playlist, print_playlist};
+
 
 fn main() {
     //Config del nivel de log
@@ -104,9 +106,18 @@ fn main() {
                 return;
             }
         };
+        
         // Llamar a la función de polling
         polling(&mut stream);
-
+    
+        // Llamar a la función get_playlist para obtener la lista de reproducción
+        let playlist = match get_playlist(&mut stream) {
+            Some(playlist) => playlist,
+            None => {
+                eprintln!("Error al obtener la lista de reproducción.");
+                return;
+            }
+        };
     });
 
     app.run().unwrap();

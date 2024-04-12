@@ -29,7 +29,7 @@ pub fn connect_client_to_server() -> std::io::Result<TcpStream> {
 //Nota:El path de la línea 36 se debe cambiar acorde a donde se encuentra la carpeta que tiene el .ini
 fn load_server_info() -> Option<(String, u16)> {
     let mut config = Ini::new();
-    if let Err(e) = config.load("/home/joaquin/QtCMP/config.ini") { //Busca el .ini del server
+    if let Err(e) = config.load("/home/fabiangj/QtCMP/config.ini") { //Busca el .ini del server
     error!("Error al cargar el archivo de configuración: {}", e); //Mensaje de error en caso de que no se cargo la info .ini del server
         return None;
     }

@@ -1,4 +1,9 @@
 #include "mainwindow.h"
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMutex>
 #include "Node.h"
 #include "circularlist.h"
 #include "principallist.h"
@@ -10,7 +15,6 @@
 #include <string>
 #include <unistd.h>
 #include <unordered_set>
-#include <QMutex>
 
 QMutex listMutex;
 
@@ -357,6 +361,7 @@ void MainWindow::on_checkBox_CommunityPlaylist_toggled(bool checked)
             ui->tableWidget->setItem(i, 4, itemUpVotes);
             ui->tableWidget->setItem(i, 5, itemDownVotes);
         }
+        createJsonFromArray(communityArray, 10, "communityArray.json");
 
     } else {
         MPlayer->stop();
@@ -539,4 +544,32 @@ void MainWindow::showDataInTableWidget(const std::vector<Node*>& nodes) {
     ui->tableWidget->setColumnWidth(3, 120);
     ui->tableWidget->setColumnWidth(4, 25);
     ui->tableWidget->setColumnWidth(5, 25);
+}
+
+void MainWindow::createJsonFromArray(Node *array[], int size, const QString &filename)
+{
+    // Crear el objeto JSON y agregar los elementos del array
+    QJsonArray jsonArray;
+    for (int i = 0; i < size; ++i) {
+        QJsonObject jsonObj;
+        jsonObj["title"] = QString::fromStdString(array[i]->title);
+        jsonObj["upVotes"] = array[i]->upVotes;
+        jsonObj["downVotes"] = array[i]->downVotes;
+        jsonArray.append(jsonObj);
+    }
+
+    // Crear el documento JSON y guardarlo en un archivo
+    QJsonDocument jsonDoc(jsonArray);
+    QFile jsonFile(filename);
+    if (!jsonFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Error opening JSON file for writing:" << jsonFile.errorString();
+        return;
+    }
+
+    jsonFile.write(jsonDoc.toJson());
+    jsonFile.close();
+
+    // Imprimir el contenido del JSON creado
+    qDebug() << "JSON content:";
+    qDebug().noquote() << jsonDoc.toJson(QJsonDocument::Indented);
 }
